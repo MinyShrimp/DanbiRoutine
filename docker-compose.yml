@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+    db:
+        image: mysql:5.7
+        container_name: routine_db
+        environment:
+            MYSQL_ROOT_PASSWORD: "root"
+            MYSQL_PASSWORD: "root"
+            MYSQL_DATABASE: "Routine"
+        command:
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
+        ports:
+            - 3306:3306
+    apiserver:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: routine_api
+        volumes:
+            - ./:/app/
+        ports: 
+            - 8003:8003
+        depends_on:
+            - db

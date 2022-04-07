@@ -1,8 +1,8 @@
 from random import random
 from django.urls import path
-from .views import helloAPI, randomQuiz
+from .View.SignUp import SignUp
 
 urlpatterns = [
-    path('hello/', helloAPI),
-    path('<int:id>/', randomQuiz)
+    #path('hello/', helloAPI),
+    path('signUp/', SignUp)
 ]

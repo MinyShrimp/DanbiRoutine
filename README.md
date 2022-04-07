@@ -11,7 +11,7 @@
 
 ## URLs
 * [api]()
-* [github]()
+* [github](https://github.com/MinyShrimp/DanbiRoutine)
 * [notion]()
 
 ## 기능
@@ -32,6 +32,7 @@
 ## 기간별 현황
 * 04-07 목요일
     * DB 설계
+    * 초기세팅 : Docker, Django, DRF, MySQL
 * 04-08 금요일
 * 04-09 토요일
 * 04-10 일요일
@@ -39,130 +40,3 @@
 * 04-12 화요일
 * 04-13 수요일
 * 04-14 목요일
-
-## Database
-### routine
-| Name        | Type                    | 설명          |
-| ----------- | ----------------------- | ------------- |
-| routine_id  | INTEGER                 | PK            |
-| account_id  | INTEGER                 | -             |
-| category_id | ENUM(MIRACLE, HOMEWORK) | -             |
-| title       | VARCHAR(100)            | -             |
-| is_alarm    | TINYINT(1)              | -             |
-| is_deleted  | TINYINT(1)              | -             |
-| created_at  | TIMESTAMP               | 제작 시간     |
-| modified_at | TIMESTAMP               | 업데이트 시간 |
-
-```
-CREATE TABLE routine (
-    routine_id   INTEGER AUTO_INCREMENT PRIMARY KEY,
-    account_id   INTEGER NOT NULL,
-    category_id  INTEGER NOT NULL,
-    title        VARCHAR(100) NOT NULL,
-    is_alarm     TINYINT(1),
-    is_deleted   TINYINT(1),
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) DEFAULT CHARACTER SET UTF8;
-```
-
-### routine_result
-| Name              | Type       | 설명          |
-| ----------------- | ---------- | ------------- |
-| routine_result_id | INTEGER    | PK            |
-| routine_id        | INTEGER    | -             |
-| result_id         | INTEGER    | -             |
-| is_deleted        | TINYINT(1) | -             |
-| created_at        | TIMESTAMP  | 제작 시간     |
-| modified_at       | TIMESTAMP  | 업데이트 시간 |
-
-```
-CREATE TABLE routine_result (
-    routine_result_id   INTEGER AUTO_INCREMENT PRIMARY KEY,
-    routine_id          INTEGER NOT NULL,
-    result_id           INTEGER NOT NULL,
-    is_deleted          TINYINT(1),
-    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) DEFAULT CHARACTER SET UTF8;
-```
-
-### routine_day
-| Name        | Type         | 설명          |
-| ----------- | ------------ | ------------- |
-| day         | VARCHAR(100) | -             |
-| routine_id  | INTEGER      | -             |
-| created_at  | TIMESTAMP    | 제작 시간     |
-| modified_at | TIMESTAMP    | 업데이트 시간 |
-
-```
-CREATE TABLE routine_day (
-    day          VARCHAR(100),
-    routine_id   INTEGER NOT NULL,
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) DEFAULT CHARACTER SET UTF8;
-```
-
-### account
-| Name        | Type         | 설명          |
-| ----------- | ------------ | ------------- |
-| account_id  | INTEGER      | PK            |
-| email       | VARCHAR(100) | -             |
-| pwd         | VARCHAR(300) | -             |
-| salt        | VARCHAR(100) | -             |
-| is_deleted  | TINYINT(1)   | -             |
-| created_at  | TIMESTAMP    | 제작 시간     |
-| modified_at | TIMESTAMP    | 업데이트 시간 |
-
-```
-CREATE TABLE account (
-    account_id   INTEGER AUTO_INCREMENT PRIMARY KEY,
-    email        VARCHAR(100) NOT NULL,
-    pwd          VARCHAR(300) NOT NULL,
-    salt         VARCHAR(100) NOT NULL,
-    is_deleted   TINYINT(1),
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) DEFAULT CHARACTER SET UTF8;
-```
-
-### category
-| Name        | Type         | 설명          |
-| ----------- | ------------ | ------------- |
-| category_id | INTEGER      | PK            |
-| title       | VARCHAR(100) | -             |
-| created_at  | TIMESTAMP    | 제작 시간     |
-| modified_at | TIMESTAMP    | 업데이트 시간 |
-
-```
-CREATE TABLE category (
-    category_id  INTEGER AUTO_INCREMENT PRIMARY KEY,
-    title        VARCHAR(100) NOT NULL,
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) DEFAULT CHARACTER SET UTF8;
-
-INSERT INTO result(title) 
-VALUES ('MIRACLE'), ('HOMEWORK');
-```
-
-### result
-| Name        | Type         | 설명          |
-| ----------- | ------------ | ------------- |
-| result_id   | INTEGER      | PK            |
-| title       | VARCHAR(100) | -             |
-| created_at  | TIMESTAMP    | 제작 시간     |
-| modified_at | TIMESTAMP    | 업데이트 시간 |
-
-```
-CREATE TABLE result (
-    result_id  INTEGER AUTO_INCREMENT PRIMARY KEY,
-    title        VARCHAR(100) NOT NULL,
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) DEFAULT CHARACTER SET UTF8;
-
-INSERT INTO result(title) 
-VALUES ('NOT'), ('TRY'), ('DONE');
-```
