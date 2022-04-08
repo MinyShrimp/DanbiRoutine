@@ -5,8 +5,8 @@ class Routine(models.Model):
     account_id   = models.PositiveIntegerField()
     category_id  = models.PositiveIntegerField()
     title        = models.CharField(max_length = 100)
-    is_alarm     = models.PositiveSmallIntegerField()
-    is_deleted   = models.PositiveSmallIntegerField()
+    is_alarm     = models.SmallIntegerField()
+    is_deleted   = models.SmallIntegerField()
     created_at   = models.DateTimeField()
     modified_at  = models.DateTimeField(auto_now = True)
 

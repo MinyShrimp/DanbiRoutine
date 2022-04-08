@@ -19,7 +19,10 @@ from routine.Functions.ClearData import isClearEmail, isClearJWT
 로그아웃 View
 
 Request
-{ "jwt": "a.b.c" }
+header: {
+    "token": "j.w.t"
+}
+body: {}
 
 Response
 {
@@ -32,8 +35,6 @@ def Logout(request: Request):
     jwt_str: Final = request.META.get('HTTP_TOKEN')
 
     # 데이터 검증
-    # if not isClearEmail(data):
-    #     return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGOUT_FAIL" ) ).data, status=400 )
     if not isClearJWT(jwt_str):
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGOUT_FAIL" ) ).data, status=400 )
 

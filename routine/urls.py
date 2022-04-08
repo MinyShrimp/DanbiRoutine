@@ -1,10 +1,10 @@
-from django.urls import path
 
-from routine.View.Login  import Login
-from routine.View.Logout import Logout
-from routine.View.SignUp import SignUp
+from django.urls import path, include
 
-from routine.View.CreateRoutine import CreateRoutine
+from routine.View.Login       import Login
+from routine.View.Logout      import Logout
+from routine.View.SignUp      import SignUp
+from routine.View.RoutineView import RoutineView
 
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
@@ -18,5 +18,8 @@ urlpatterns = [
     path('login/',  Login),
     path('logout/', Logout),
 
-    path('routine/', CreateRoutine),
+    # path('routine/', CreateRoutine),
+    # path('routine/', DeleteRoutine),
+    # include([CreateRoutine, DeleteRoutine], "routine/")
+    path('routine/', RoutineView.as_view())
 ]

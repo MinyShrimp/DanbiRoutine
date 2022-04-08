@@ -2,9 +2,15 @@
 import re
 from typing import Final
 
+import jwt
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from routine.Model.Category import Category
+from api.settings import SECRET_KEY
+
+from routine.Model.Account    import Account
+from routine.Model.Category   import Category
+from routine.Model.Routine    import Routine
+from routine.Model.RoutineDay import RoutineDay
 
 def CheckEmail(email: str) -> bool:
     regex: Final = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
@@ -73,12 +79,34 @@ def isClearDataEmailPwd(data: object):
     if not isClearEmail(data):
         return False
     
-    # if not isClearPwd(data):
-    #     return False
+    if not isClearPwd(data):
+        return False
+    
+    # 키 값이 정상적으로 왔는지
+    keys = list( data.keys() )
+    for _ in ["email", "pwd"]:
+        if not ( _ in keys ):
+            return False
+    
+    # 값들의 자료형이 잘 왔는지
+    email, pwd = data["email"], data["pwd"]
+    for i, j in zip([email, pwd], [str, str]):
+        if type(i) != j:
+            return False
+
+    try:
+        Account.objects.get(email = data["email"])
+    except:
+        return False
 
     return True
 
-def isClearRoutineCreateData(data: object, jwt: str):
+# CreateRoutine에서 사용
+def isClearRoutineCreateData(data: object, jwt_str: str):
+    # JWT 검사
+    if not isClearJWT(jwt_str):
+        return False
+
     # 키 값이 정상적으로 왔는지
     keys = list( data.keys() )
     for _ in ["title", "category", "goal", "is_alarm", "days"]:
@@ -91,6 +119,7 @@ def isClearRoutineCreateData(data: object, jwt: str):
         if type(i) != j:
             return False
     
+    # SQL Injection Check
     for v in [title, category, goal]:
         if CheckInjection(v):
             return False
@@ -112,5 +141,39 @@ def isClearRoutineCreateData(data: object, jwt: str):
     for v in days:
         if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SET", "SUN"] ):
             return False
+    
+    try:
+        email = jwt.decode(jwt_str, SECRET_KEY)["email"]
+        Account.objects.get( email = email )
+        Category.objects.get( title = category )
+    except:
+        return False
+    
+    return True
+
+# DeleteRoutine에서 사용
+def isClearRoutineDeleteData(data: object, jwt_str: str):
+    # JWT 검사
+    if not isClearJWT(jwt_str):
+        return False
+
+    # 키 값이 정상적으로 왔는지
+    keys = list( data.keys() )
+    if not ( "routine_id" in keys ):
+        return False
+
+    # 값들의 자료형이 잘 왔는지
+    routine_id = data["routine_id"]
+    if type(routine_id) != int:
+        return False
+    
+    try:
+        email = jwt.decode(jwt_str, SECRET_KEY)["email"]
+        Account.objects.get( email = email )
+        Routine.objects.get( routine_id = routine_id )
+        RoutineDay.objects.get( routine_id = routine_id )
+    except Exception as e:
+        print(e)
+        return False
     
     return True
