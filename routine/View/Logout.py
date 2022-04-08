@@ -2,20 +2,24 @@
 from datetime import datetime
 from typing import Final
 
+import jwt
+
+from api.settings import SECRET_KEY
+
 from rest_framework.response   import Response
 from rest_framework.request    import Request
 from rest_framework.decorators import api_view
 
-from routine.Model.Message                import Message
-from routine.Model.Account                import Account
-from routine.Serializer.MessageSerializer import MessageSerializer
-from routine.Verification.ClearData       import isClearLogoutData
+from routine.Model.Message       import Message
+from routine.Model.Account       import Account
+from routine.Serializer.Message  import MessageSerializer
+from routine.Functions.ClearData import isClearEmail, isClearJWT
 
 """
 로그아웃 View
 
 Request
-{ "email": "ksk7584@gmail.com", "jwt": "a.b.c" }
+{ "jwt": "a.b.c" }
 
 Response
 {
@@ -25,14 +29,17 @@ Response
 """
 @api_view(['POST'])
 def Logout(request: Request):
-    data: Final = request.data
+    jwt_str: Final = request.META.get('HTTP_TOKEN')
 
     # 데이터 검증
-    if not isClearLogoutData(data):
+    # if not isClearEmail(data):
+    #     return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGOUT_FAIL" ) ).data, status=400 )
+    if not isClearJWT(jwt_str):
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGOUT_FAIL" ) ).data, status=400 )
 
     # 계정 정보 가져오기
-    account = Account.objects.get(email = data["email"])
+    email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
+    account = Account.objects.get(email = email)
 
     # 이미 로그아웃이 되어있는지 확인
     if account.is_login == 0:

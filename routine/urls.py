@@ -4,6 +4,8 @@ from routine.View.Login  import Login
 from routine.View.Logout import Logout
 from routine.View.SignUp import SignUp
 
+from routine.View.CreateRoutine import CreateRoutine
+
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
@@ -15,4 +17,6 @@ urlpatterns = [
     path('signup/', SignUp),
     path('login/',  Login),
     path('logout/', Logout),
+
+    path('routine/', CreateRoutine),
 ]

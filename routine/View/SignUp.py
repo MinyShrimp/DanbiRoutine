@@ -5,12 +5,12 @@ from rest_framework.response   import Response
 from rest_framework.request    import Request
 from rest_framework.decorators import api_view
 
-from routine.Model.Message                import Message
-from routine.Model.Account                import Account
-from routine.Serializer.MessageSerializer import MessageSerializer
-from routine.Serializer.AccountSerializer import AccountIDSerializer
-from routine.Verification.ClearData       import isClearDataEmailPwd
-from routine.Verification.GetPwd          import GetPwd
+from routine.Model.Message       import Message
+from routine.Model.Account       import Account
+from routine.Serializer.Message  import MessageSerializer
+from routine.Serializer.Account  import AccountIDSerializer
+from routine.Functions.ClearData import isClearDataEmailPwd
+from routine.Functions.GetPwd    import GetPwd
 
 """
 회원가입 View

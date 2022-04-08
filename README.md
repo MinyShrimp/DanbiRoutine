@@ -13,6 +13,7 @@
 * [api]()
 * [github](https://github.com/MinyShrimp/DanbiRoutine)
 * [notion](https://incongruous-mammal-d63.notion.site/219a8e9343cb4933b8e8e8cc5d6f51ad?v=b34abb4ff6f2455b9fba63d218b67cc9)
+* [Postman](https://danbiroutine.postman.co/workspace/)
 
 ## 기능
 * 유저 로그인 / 로그아웃 (JWT 사용) + 회원가입
@@ -28,15 +29,3 @@
 * 프로젝트 소스 코드의 구성이 가독성 있게 구성되어 있는가?
 * 테스트 코드는 적절하게 구현되어 있는가?
 * 요구사항에 대한 판단이 적절하게 이루어져 있는가?
-
-## 기간별 현황
-* 04-07 목요일
-    * DB 설계
-    * 초기세팅 : Docker, Django, DRF, MySQL
-* 04-08 금요일
-* 04-09 토요일
-* 04-10 일요일
-* 04-11 월요일
-* 04-12 화요일
-* 04-13 수요일
-* 04-14 목요일

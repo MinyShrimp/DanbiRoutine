@@ -1,5 +1,5 @@
 from django.test import TestCase
-from routine.Verification.ClearData import isClearDataEmailPwd
+from routine.Functions.ClearData import isClearDataEmailPwd
 
 class DataTest(TestCase):
     # 정상적으로 왔을때

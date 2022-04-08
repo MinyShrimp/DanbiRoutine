@@ -2,16 +2,16 @@
 from datetime import datetime
 from typing import Final
 
-from rest_framework.response         import Response
-from rest_framework.request          import Request
-from rest_framework.decorators       import api_view
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response      import Response
+from rest_framework.request       import Request
+from rest_framework.decorators    import api_view
 
-from routine.Model.Message                import Message
-from routine.Model.Account                import Account
-from routine.Serializer.MessageSerializer import MessageSerializer
-from routine.Verification.ClearData       import isClearDataEmailPwd
-from routine.Verification.GetPwd          import GetPwd
+from routine.Model.Message        import Message
+from routine.Model.Account        import Account
+from routine.Serializer.Message   import MessageSerializer
+from routine.Functions.ClearData  import isClearDataEmailPwd
+from routine.Functions.GetPwd     import GetPwd
+from routine.Token.EmailToken     import EmailToken
 
 """
 로그인 View
@@ -25,12 +25,7 @@ Response
     "message": { "msg": ".", "status": "ROUTINE_LOGIN_OK" }
 }
 """
-class EmailToken(RefreshToken):
-    @classmethod
-    def getToken(cls, email):
-        token = cls()
-        token["email"] = email
-        return token
+
 
 @api_view(['POST'])
 def Login(request: Request):
