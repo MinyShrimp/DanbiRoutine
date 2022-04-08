@@ -12,7 +12,7 @@
 ## URLs
 * [api]()
 * [github](https://github.com/MinyShrimp/DanbiRoutine)
-* [notion]()
+* [notion](https://incongruous-mammal-d63.notion.site/219a8e9343cb4933b8e8e8cc5d6f51ad?v=b34abb4ff6f2455b9fba63d218b67cc9)
 
 ## 기능
 * 유저 로그인 / 로그아웃 (JWT 사용) + 회원가입

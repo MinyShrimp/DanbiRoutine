@@ -1,7 +1,7 @@
 FROM python:3.9.12-bullseye
 WORKDIR /app
-RUN pip install django djangorestframework
-RUN pip install pycrypto mysqlclient
+COPY requirements.txt /app
+RUN pip install -r requirements.txt
 COPY . /app
 
 ENV DOCKERIZE_VERSION v0.6.1
