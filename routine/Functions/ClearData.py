@@ -7,10 +7,11 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.settings import SECRET_KEY
 
-from routine.Model.Account    import Account
-from routine.Model.Category   import Category
-from routine.Model.Routine    import Routine
-from routine.Model.RoutineDay import RoutineDay
+from routine.Model.Account       import Account
+from routine.Model.Category      import Category
+from routine.Model.Routine       import Routine
+from routine.Model.RoutineDay    import RoutineDay
+from routine.Model.RoutineResult import RoutineResult
 
 def CheckEmail(email: str) -> bool:
     regex: Final = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}([.]\w{2,3})?$'
@@ -177,10 +178,9 @@ def isClearRoutineDeleteData(data: object, jwt_str: str):
     try:
         email = jwt.decode(jwt_str, SECRET_KEY)["email"]
         Account.objects.get( email = email )
-        Routine.objects.get( routine_id = routine_id )
-        RoutineDay.objects.get( routine_id = routine_id )
+        Routine.objects.get( routine_id = routine_id, is_deleted = 0 )
+        RoutineResult.objects.get(routine_id = routine_id, is_deleted = 0)
     except Exception as e:
-        print(e)
         return False
     
     return True

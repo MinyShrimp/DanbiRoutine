@@ -163,6 +163,10 @@ class RoutineView(APIView):
     }
     """
     # DELETE
+    def delete_model(self, model):
+        model.is_deleted, model.modified_at = 1, now()
+        model.save()
+
     def delete(self, request: Request):
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
@@ -182,11 +186,11 @@ class RoutineView(APIView):
         # body data 꺼내기
         routine_id = data["routine_id"]
 
-        # Routine.objects.get(routine_id = routine_id).delete()
-        # RoutineDay.objects.get(routine_id = routine_id).delete()
-        # RoutineResult.objects.filter( routine_id = routine_id ).delete()
+        routine = Routine.objects.get(routine_id = routine_id)
+        self.delete_model(routine)
 
-        
+        routine_result = RoutineResult.objects.get(routine_id = routine_id)
+        self.delete_model(routine_result)
 
         return Response({
             "data":    { "routine_id": routine_id },
