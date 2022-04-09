@@ -13,7 +13,7 @@ from routine.Model.Routine    import Routine
 from routine.Model.RoutineDay import RoutineDay
 
 def CheckEmail(email: str) -> bool:
-    regex: Final = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+    regex: Final = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}([.]\w{2,3})?$'
     return re.search( regex, email )
 
 def CheckPwd(pwd: str) -> bool:
@@ -74,7 +74,7 @@ def isClearJWT(data: str):
     except:
         return False
 
-# Signup & Login에서 사용
+# Signup에서 사용
 def isClearDataEmailPwd(data: object):
     if not isClearEmail(data):
         return False
@@ -94,6 +94,13 @@ def isClearDataEmailPwd(data: object):
         if type(i) != j:
             return False
 
+    return True
+ 
+# Login에서 사용
+def isClearLoginData(data: object):
+    if not isClearDataEmailPwd(data):
+        return False
+    
     try:
         Account.objects.get(email = data["email"])
     except:

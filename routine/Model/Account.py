@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.db import models
 
 class Account(models.Model):
@@ -11,7 +10,7 @@ class Account(models.Model):
     created_at   = models.DateTimeField()
     login_at     = models.DateTimeField()
     logout_at    = models.DateTimeField()
-    modified_at  = models.DateTimeField(default = datetime.now())
+    modified_at  = models.DateTimeField()
 
     class Meta:
         managed  = False

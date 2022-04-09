@@ -6,4 +6,4 @@ db.sqlite3
 config.py
 staticfiles
 .env
-Database
+db

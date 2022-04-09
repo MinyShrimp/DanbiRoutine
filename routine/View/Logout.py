@@ -1,7 +1,7 @@
 
 from typing import Final
 
-import jwt, pytz
+import jwt
 from django.utils.timezone import now
 
 from api.settings import SECRET_KEY
@@ -13,7 +13,7 @@ from rest_framework.decorators import api_view
 from routine.Model.Message       import Message
 from routine.Model.Account       import Account
 from routine.Serializer.Message  import MessageSerializer
-from routine.Functions.ClearData import isClearEmail, isClearJWT
+from routine.Functions.ClearData import isClearJWT
 
 """
 로그아웃 View
@@ -48,7 +48,8 @@ def Logout(request: Request):
 
     # 로그아웃 정보 DB에 저장
     account.is_login = 0
-    account.logout_at = now()
+    _now = now()
+    account.logout_at, account.modified_at = _now, _now
     account.save()
 
     return Response({

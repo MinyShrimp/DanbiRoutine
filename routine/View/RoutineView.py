@@ -1,8 +1,7 @@
 
-from datetime import datetime, date
 from typing import Final
-import jwt, pytz
-from django.utils import timezone
+import jwt
+from django.utils.timezone import now
 
 from api.settings import SECRET_KEY
 
@@ -64,8 +63,6 @@ class RoutineView(APIView):
         # routine         = Routine.objects.get(routine_id = routine_id)
         # routine_day     = RoutineDay.objects.get(routine_id = routine_id)
         # routine_results = RoutineResult.objects.filter( routine_id = routine_id )
-
-        print(datetime.now())
 
         return Response("get")
 

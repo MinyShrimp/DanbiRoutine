@@ -11,7 +11,7 @@ from rest_framework.decorators    import api_view
 from routine.Model.Message        import Message
 from routine.Model.Account        import Account
 from routine.Serializer.Message   import MessageSerializer
-from routine.Functions.ClearData  import isClearDataEmailPwd
+from routine.Functions.ClearData  import isClearLoginData
 from routine.Functions.GetPwd     import GetPwd
 from routine.Token.EmailToken     import EmailToken
 
@@ -27,14 +27,12 @@ Response
     "message": { "msg": ".", "status": "ROUTINE_LOGIN_OK" }
 }
 """
-
-
 @api_view(['POST'])
 def Login(request: Request):
     data: Final = request.data
 
     # 데이터 검증
-    if not isClearDataEmailPwd(data):
+    if not isClearLoginData(data):
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGIN_FAIL" ) ).data, status=400 )
 
     # 계정 정보 가져오기
@@ -55,7 +53,8 @@ def Login(request: Request):
 
     # 로그인 정보 DB에 저장
     account.is_login = 1
-    account.login_at = now()
+    _now = now()
+    account.login_at, account.modified_at = _now, _now
     account.save()
 
     return Response({
