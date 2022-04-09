@@ -1,6 +1,8 @@
 
-from datetime import datetime
 from typing import Final
+
+import pytz
+from django.utils.timezone import now
 
 from rest_framework.response      import Response
 from rest_framework.request       import Request
@@ -53,7 +55,7 @@ def Login(request: Request):
 
     # 로그인 정보 DB에 저장
     account.is_login = 1
-    account.login_at = datetime.now()
+    account.login_at = now()
     account.save()
 
     return Response({

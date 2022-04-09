@@ -8,7 +8,7 @@ class Routine(models.Model):
     is_alarm     = models.SmallIntegerField()
     is_deleted   = models.SmallIntegerField()
     created_at   = models.DateTimeField()
-    modified_at  = models.DateTimeField(auto_now = True)
+    modified_at  = models.DateTimeField()
 
     class Meta:
         managed  = False

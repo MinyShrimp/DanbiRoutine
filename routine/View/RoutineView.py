@@ -1,6 +1,8 @@
 
+from datetime import datetime, date
 from typing import Final
-import jwt
+import jwt, pytz
+from django.utils import timezone
 
 from api.settings import SECRET_KEY
 
@@ -13,14 +15,83 @@ from routine.Model.Message       import Message
 from routine.Model.Category      import Category
 from routine.Model.Routine       import Routine
 from routine.Model.RoutineDay    import RoutineDay
+from routine.Model.RoutineResult import RoutineResult
 from routine.Serializer.Message  import MessageSerializer
 from routine.Functions.ClearData import isClearRoutineCreateData, isClearRoutineDeleteData
 
+# /api/routine
 class RoutineView(APIView):
+    """
+    Request:
+    header: {
+        "token": "j.w.t"
+    }
+    body: {
+        "routine_id" : 3
+    }
+
+    Response:
+    {
+        "data" : {
+            "goal" : " 2 ",
+            "id" : 1,
+            "result" : "NOT",
+            "title" : " !"
+        },
+        "message": { "msg": " .", "status": "ROUTINE_DETAIL_OK" }
+    }
+    """
     # SEARCH
     def get(self, request: Request):
-        pass
+        # data:    Final = request.data
+        # jwt_str: Final = request.META.get('HTTP_TOKEN')
 
+        # # 데이터 검증
+        # if not isClearRoutineDeleteData(data, jwt_str):
+        #     return Response( MessageSerializer( Message.getByCode( "ROUTINE_CREATE_FAIL" ) ).data, status=400 )
+        
+        # # header에 있는 JWT 꺼내기
+        # email     = jwt.decode(jwt_str, SECRET_KEY)["email"]
+        # account   = Account.objects.get( email = email )
+
+        # # 로그인 상태인지 확인
+        # if account.is_login == 0:
+        #     return Response( MessageSerializer( Message.getByCode( "ROUTINE_CREATE_FAIL" ) ).data, status=400 )
+        
+        # # body data 꺼내기
+        # routine_id = data["routine_id"]
+
+        # routine         = Routine.objects.get(routine_id = routine_id)
+        # routine_day     = RoutineDay.objects.get(routine_id = routine_id)
+        # routine_results = RoutineResult.objects.filter( routine_id = routine_id )
+
+        print(datetime.now())
+
+        return Response("get")
+
+    """
+    Request:
+    header: {
+        "token": "j.w.t"
+    }
+    body: {
+        "title": "",
+        "category": "HOMEWORK",
+        "goal": "",
+        "is_alarm": true,
+        "days": ["MON", "WED", "FRI"]
+    }
+
+    Response:
+    {
+        "data": {
+            "routine_id": 1
+        },
+        "message": {
+            "msg": " .", "status": "ROUTINE_CREATE_OK"
+        }
+    }
+    """
     # CREATE
     def post(self, request: Request):
         data:    Final = request.data
@@ -48,8 +119,19 @@ class RoutineView(APIView):
             is_alarm = 1 if is_alarm else 0, is_deleted = 0
         )
 
-        routine_day = RoutineDay.objects.create(
-            routine_id = routine.routine_id, day = "|".join(days)
+        # for day in days:
+        #     RoutineDay.objects.create(
+        #         routine_id = routine.routine_id, day = day
+        #     )
+        # RoutineDay.objects.bulk_create(
+        #     [ RoutineDay( routine_id = routine.routine_id, day = day ) for day in days ]
+        # )
+        # RoutineDay.objects.create(
+        #     routine_id = routine.routine_id, day = "|".join(days)
+        # )
+
+        RoutineResult.objects.create(
+            routine_id = routine.routine_id, result_id = 1, is_deleted = 0
         )
 
         return Response({
@@ -57,6 +139,26 @@ class RoutineView(APIView):
             "message": MessageSerializer(Message.getByCode( "ROUTINE_CREATE_OK" )).data
         })
 
+    """
+    Request:
+    header: {
+        "token": "j.w.t"
+    }
+    body: {
+        "routine_id" : 1
+    }
+
+    Response:
+    {
+        "data": {
+            "routine_id": 1
+        },
+        "message": {
+            "msg": " .", 
+            "status": "ROUTINE_DELETE_OK"
+        }
+    }
+    """
     # DELETE
     def delete(self, request: Request):
         data:    Final = request.data
@@ -77,14 +179,38 @@ class RoutineView(APIView):
         # body data 꺼내기
         routine_id = data["routine_id"]
 
-        Routine.objects.get(routine_id=routine_id).delete()
-        RoutineDay.objects.get(routine_id=routine_id).delete()
+        Routine.objects.get(routine_id = routine_id).delete()
+        RoutineDay.objects.get(routine_id = routine_id).delete()
+        RoutineResult.objects.filter( routine_id = routine_id ).delete()
 
         return Response({
             "data":    { "routine_id": routine_id },
             "message": MessageSerializer(Message.getByCode( "ROUTINE_DELETE_OK" )).data
         })
 
+    """
+    Request:
+    header: {
+        "token": "j.w.t"
+    }
+    body: {
+        "title"    : "(Optional)"
+        "category" : "(Optional)",
+        "goal"     : "(Optional)",
+        "is_alarm" : "(Optional)",
+        "days"     : (Optional)
+    }
+
+    Response:
+    {
+        "data": {
+            "routine_id": 1
+        },
+        "message": {
+            "msg": " .", "status": "ROUTINE_UPDATE_OK"
+        }
+    }
+    """
     # Update
     def put(self, request: Request):
         return Response("put")

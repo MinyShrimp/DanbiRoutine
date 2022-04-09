@@ -1,8 +1,8 @@
 
-from datetime import datetime
 from typing import Final
 
-import jwt
+import jwt, pytz
+from django.utils.timezone import now
 
 from api.settings import SECRET_KEY
 
@@ -48,7 +48,7 @@ def Logout(request: Request):
 
     # 로그아웃 정보 DB에 저장
     account.is_login = 0
-    account.logout_at = datetime.now()
+    account.logout_at = now()
     account.save()
 
     return Response({

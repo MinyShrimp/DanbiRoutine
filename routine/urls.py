@@ -1,5 +1,5 @@
 
-from django.urls import path, include
+from django.urls import path
 
 from routine.View.Login       import Login
 from routine.View.Logout      import Logout
@@ -18,8 +18,5 @@ urlpatterns = [
     path('login/',  Login),
     path('logout/', Logout),
 
-    # path('routine/', CreateRoutine),
-    # path('routine/', DeleteRoutine),
-    # include([CreateRoutine, DeleteRoutine], "routine/")
     path('routine/', RoutineView.as_view())
 ]
