@@ -1,4 +1,5 @@
 
+from datetime import datetime, date
 from typing import Final
 import jwt
 from django.utils.timezone import now
@@ -116,16 +117,21 @@ class RoutineView(APIView):
             is_alarm = 1 if is_alarm else 0, is_deleted = 0
         )
 
-        # for day in days:
-        #     RoutineDay.objects.create(
-        #         routine_id = routine.routine_id, day = day
-        #     )
-        # RoutineDay.objects.bulk_create(
-        #     [ RoutineDay( routine_id = routine.routine_id, day = day ) for day in days ]
-        # )
-        # RoutineDay.objects.create(
-        #     routine_id = routine.routine_id, day = "|".join(days)
-        # )
+        day_convertor = { "MON": 0, "TUE": 1, "WED": 2, "THR": 3, "FRI": 4, "SAT": 5, "SUN": 6 }
+        _now = now()
+        today = _now.weekday()
+        for day in days:
+            output, weekday = 0, day_convertor[day]
+
+            if weekday >= today:
+                output = weekday - today
+            elif weekday < today:
+                output = 7 - ( today - weekday )
+
+            RoutineDay.objects.create(
+                routine_id = routine.routine_id, 
+                day = date( _now.year, _now.month, _now.day + output )
+            )
 
         RoutineResult.objects.create(
             routine_id = routine.routine_id, result_id = 1, is_deleted = 0
@@ -176,9 +182,11 @@ class RoutineView(APIView):
         # body data 꺼내기
         routine_id = data["routine_id"]
 
-        Routine.objects.get(routine_id = routine_id).delete()
-        RoutineDay.objects.get(routine_id = routine_id).delete()
-        RoutineResult.objects.filter( routine_id = routine_id ).delete()
+        # Routine.objects.get(routine_id = routine_id).delete()
+        # RoutineDay.objects.get(routine_id = routine_id).delete()
+        # RoutineResult.objects.filter( routine_id = routine_id ).delete()
+
+        
 
         return Response({
             "data":    { "routine_id": routine_id },
