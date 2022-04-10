@@ -1,9 +1,8 @@
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing   import Final
 from jwt      import decode
 from django.utils.timezone import now
-from logging  import getLogger
 
 from api.settings import SECRET_KEY
 
@@ -11,6 +10,7 @@ from rest_framework.response   import Response
 from rest_framework.request    import Request
 from rest_framework.decorators import APIView
 
+from routine.Log.Log             import Log
 from routine.Model.Account       import Account
 from routine.Model.Message       import Message
 from routine.Model.Category      import Category
@@ -21,8 +21,6 @@ from routine.Model.RoutineResult import RoutineResult
 from routine.Serializer.Message  import MessageSerializer
 from routine.Serializer.Routine  import RoutineIDSerializer
 from routine.Functions.ClearData import isClearJWT, isClearRoutineCreateData, isClearRoutineDeleteData, isClearRoutineDetailData, isClearRoutineUpdateData
-
-logger = getLogger('danbi.routine')
 
 # /api/routine
 class RoutineView(APIView):
@@ -68,11 +66,12 @@ class RoutineView(APIView):
 
         # JWT 검증
         if not isClearJWT(jwt_str):
-            logger.error( "ROUTINE_JWT_FAIL" )
+            Log.instance().error( "SEARCH: ROUTINE_JWT_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
         # 데이터 검증
         if not isClearRoutineDetailData(data, jwt_str):
+            Log.instance().error( "SEARCH: ROUTINE_DETAIL_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DETAIL_FAIL" ) ).data, status=400 )
         
         # header에 있는 JWT 꺼내기
@@ -81,6 +80,7 @@ class RoutineView(APIView):
 
         # 로그인 상태인지 확인
         if account.is_login == 0:
+            Log.instance().error( "SEARCH: ROUTINE_NOT_LOGIN" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DETAIL_FAIL" ) ).data, status=400 )
         
         # body data 꺼내기
@@ -88,7 +88,7 @@ class RoutineView(APIView):
         y, m, d    = data["day"].split('-')
         date       = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
 
-        routine        = Routine.objects.select_related('account').get( routine_id = routine_id, account = account, is_deleted = 0 )
+        routine        = Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.select_related('routine').get( routine = routine )
         routine_day    = RoutineDay.objects.select_related('routine').get( routine = routine, day = date )
 
@@ -99,8 +99,7 @@ class RoutineView(APIView):
             "day":    routine_day.day
         }
 
-        logger.info( "ROUTINE_DETAIL_OK" )
-
+        Log.instance().info( "SEARCH: ROUTINE_DETAIL_OK", routine.routine_id )
         return Response({
             "data":    routine_result_serializer,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_DETAIL_OK" )).data
@@ -136,10 +135,12 @@ class RoutineView(APIView):
 
         # JWT 검증
         if not isClearJWT(jwt_str):
+            Log.instance().error( "CREATE: ROUTINE_JWT_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
         # 데이터 검증
         if not isClearRoutineCreateData(data, jwt_str):
+            Log.instance().error( "CREATE: ROUTINE_CREATE_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_CREATE_FAIL" ) ).data, status=400 )
 
         # body 데이터 꺼내기
@@ -152,10 +153,11 @@ class RoutineView(APIView):
 
         # 로그인 상태인지 확인
         if account.is_login == 0:
+            Log.instance().error( "CREATE: ROUTINE_NOT_LOGIN" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_CREATE_FAIL" ) ).data, status=400 )
 
         # Routine 생성
-        routine = Routine.objects.select_related('account').create( 
+        routine = Routine.objects.select_related('account', 'category').create( 
             account = account, category = cateModel, title = title,
             is_alarm = 1 if is_alarm else 0, is_deleted = 0
         )
@@ -168,6 +170,7 @@ class RoutineView(APIView):
             [ RoutineDay( routine = routine, day = _day ) for _day in self.date_convertor(days) ]
         )
 
+        Log.instance().info( "CREATE: ROUTINE_CREATE_OK", routine.routine_id )
         return Response({
             "data":    RoutineIDSerializer(routine).data,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_CREATE_OK" )).data
@@ -204,10 +207,12 @@ class RoutineView(APIView):
 
         # JWT 검증
         if not isClearJWT(jwt_str):
+            Log.instance().error( "DELETE: ROUTINE_JWT_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
         # 데이터 검증
         if not isClearRoutineDeleteData(data, jwt_str):
+            Log.instance().error( "DELETE: ROUTINE_DELETE_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
         
         # header에 있는 JWT 꺼내기
@@ -216,19 +221,21 @@ class RoutineView(APIView):
 
         # 로그인 상태인지 확인
         if account.is_login == 0:
+            Log.instance().error( "DELETE: ROUTINE_NOT_LOGIN" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
 
         # body data 꺼내기
         routine_id = data["routine_id"]
 
-        routine = Routine.objects.get( routine_id = routine_id )
+        routine = Routine.objects.select_related('account', 'category').get( routine_id = routine_id )
         self.delete_model(routine)
 
         routine_result = RoutineResult.objects.get( routine = routine )
         self.delete_model(routine_result)
 
         RoutineDay.objects.filter( routine = routine ).delete()
-        
+
+        Log.instance().info( "DELETE: ROUTINE_DELETE_OK", routine.routine_id )
         return Response({
             "data":    RoutineIDSerializer(routine).data,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_DELETE_OK" )).data
@@ -266,10 +273,12 @@ class RoutineView(APIView):
 
         # JWT 검증
         if not isClearJWT(jwt_str):
+            Log.instance().error( "UPDATE: ROUTINE_JWT_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
         # 데이터 검증
         if not isClearRoutineUpdateData(data, jwt_str):
+            Log.instance().error( "UPDATE: ROUTINE_UPDATE_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_UPDATE_FAIL" ) ).data, status=400 )
 
         # header에 있는 JWT 꺼내기
@@ -278,6 +287,7 @@ class RoutineView(APIView):
 
         # 로그인 상태인지 확인
         if account.is_login == 0:
+            Log.instance().error( "UPDATE: ROUTINE_NOT_LOGIN" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_UPDATE_FAIL" ) ).data, status=400 )
 
         # body data 꺼내기
@@ -298,6 +308,7 @@ class RoutineView(APIView):
             [ RoutineDay( routine = routine, day = _day ) for _day in self.date_convertor(days) ]
         )
 
+        Log.instance().info( "UPDATE: ROUTINE_UPDATE_OK", routine.routine_id )
         return Response({
             "data":    RoutineIDSerializer(routine).data,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_UPDATE_OK" )).data

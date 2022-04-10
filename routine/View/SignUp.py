@@ -5,6 +5,7 @@ from rest_framework.response   import Response
 from rest_framework.request    import Request
 from rest_framework.decorators import api_view
 
+from routine.Log.Log             import Log
 from routine.Model.Message       import Message
 from routine.Model.Account       import Account
 from routine.Serializer.Message  import MessageSerializer
@@ -30,10 +31,12 @@ def SignUp(request: Request):
 
     # 데이터 검증
     if not isClearDataEmailPwd(data):
+        Log.instance().error( "SIGNUP: ROUTINE_SIGNUP_FAIL" )
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_SIGNUP_FAIL" ) ).data, status=400 )
     
     # Email 중복체크
     if Account.objects.filter(email=data['email']).exists():
+        Log.instance().error( "SIGNUP: ROUTINE_SIGNUP_EMAIL_OVERLAP" )
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_SIGNUP_EMAIL_OVERLAP" ) ).data, status=400 )
     
     # pwd => SHA-512 암호화
@@ -46,6 +49,7 @@ def SignUp(request: Request):
     # Insert Account
     account = Account.objects.create(email=email, pwd=pwd, salt=salt)
     
+    Log.instance().info( "SIGNUP: ROUTINE_SIGNUP_OK", account.account_id )
     return Response({
         "data":    AccountIDSerializer(account).data,
         "message": MessageSerializer(Message.getByCode( "ROUTINE_SIGNUP_OK" )).data

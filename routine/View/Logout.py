@@ -10,6 +10,7 @@ from rest_framework.response   import Response
 from rest_framework.request    import Request
 from rest_framework.decorators import api_view
 
+from routine.Log.Log             import Log
 from routine.Model.Message       import Message
 from routine.Model.Account       import Account
 from routine.Serializer.Message  import MessageSerializer
@@ -36,7 +37,8 @@ def Logout(request: Request):
 
     # 데이터 검증
     if not isClearJWT(jwt_str):
-        return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGOUT_FAIL" ) ).data, status=400 )
+        Log.instance().error( "LOGOUT: ROUTINE_JWT_FAIL" )
+        return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
     # 계정 정보 가져오기
     email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
@@ -44,6 +46,7 @@ def Logout(request: Request):
 
     # 이미 로그아웃이 되어있는지 확인
     if account.is_login == 0:
+        Log.instance().error( "LOGOUT: ROUTINE_NOT_LOGIN" )
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGOUT_FAIL" ) ).data, status=400 )
 
     # 로그아웃 정보 DB에 저장
@@ -52,6 +55,7 @@ def Logout(request: Request):
     account.logout_at, account.modified_at = _now, _now
     account.save()
 
+    Log.instance().info( "LOGOUT: ROUTINE_LOGOUT_OK", account.account_id )
     return Response({
         "data":    { "account_id": account.account_id },
         "message": MessageSerializer(Message.getByCode( "ROUTINE_LOGOUT_OK" )).data

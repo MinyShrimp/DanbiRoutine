@@ -8,6 +8,7 @@ from rest_framework.response      import Response
 from rest_framework.request       import Request
 from rest_framework.decorators    import APIView
 
+from routine.Log.Log              import Log
 from routine.Model.Message        import Message
 from routine.Model.Account        import Account
 from routine.Model.Routine        import Routine
@@ -50,10 +51,12 @@ class RoutinesSearch(APIView):
 
         # JWT 검증
         if not isClearJWT(jwt_str):
+            Log.instance().error( "SEARCHs: ROUTINE_JWT_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
         # 데이터 검증
         if not isClearRoutineListData(data, jwt_str):
+            Log.instance().error( "SEARCHs: ROUTINE_LIST_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
         
         # header에 있는 JWT 꺼내기
@@ -62,6 +65,7 @@ class RoutinesSearch(APIView):
 
         # 로그인 상태인지 확인
         if account.is_login == 0:
+            Log.instance().error( "SEARCHs: ROUTINE_NOT_LOGIN" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
 
         # body data 꺼내기
@@ -78,6 +82,7 @@ class RoutinesSearch(APIView):
             "result":     result.result.title 
         } for day, result in zip(routine_days, routine_result) ]
 
+        Log.instance().info( "SEARCHs: ROUTINE_LIST_OK", routine.routine_id )
         return Response({
             "data":    serializer,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_LIST_OK" )).data
