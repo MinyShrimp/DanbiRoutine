@@ -19,7 +19,7 @@ from routine.Model.RoutineDay    import RoutineDay
 from routine.Model.RoutineResult import RoutineResult
 from routine.Serializer.Message  import MessageSerializer
 from routine.Serializer.Routine  import RoutineIDSerializer
-from routine.Functions.ClearData import isClearRoutineCreateData, isClearRoutineDeleteData, isClearRoutineDetailData
+from routine.Functions.ClearData import isClearRoutineCreateData, isClearRoutineDeleteData, isClearRoutineDetailData, isClearRoutineUpdateData
 
 # /api/routine
 class RoutineView(APIView):
@@ -91,12 +91,6 @@ class RoutineView(APIView):
         today         = _now.weekday()
 
         for day in _days:
-            # output, weekday = 0, day_convertor[day]
-
-            # if weekday >= today:
-            #     output = weekday - today
-            # elif weekday < today:
-            #     output = 7 - ( today - weekday )
             weekday = day_convertor[day]
             output  = ( weekday - today ) if weekday >= today else ( 7 - ( today - weekday ) )
             result.append( ( _now + timedelta(days = output) ).date() )
@@ -253,8 +247,8 @@ class RoutineView(APIView):
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 
         # # 데이터 검증
-        # if not isClearRoutineDeleteData(data, jwt_str):
-        #     return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
+        if not isClearRoutineUpdateData(data, jwt_str):
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_UPDATE_FAIL" ) ).data, status=400 )
 
         # header에 있는 JWT 꺼내기
         email     = decode(jwt_str, SECRET_KEY)["email"]
@@ -262,24 +256,27 @@ class RoutineView(APIView):
 
         # 로그인 상태인지 확인
         if account.is_login == 0:
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_UPDATE_FAIL" ) ).data, status=400 )
 
         # body data 꺼내기
         routine_id, title, category, goal, is_alarm, days = \
             data["routine_id"], data["title"], data["category"], data["goal"], data["is_alarm"], data["days"]
 
-        routine = Routine.objects.select_related('account').get( routine_id = routine_id, account = account, is_deleted = 0 )
-        routine.title = title
-        routine.category = Category.objects.get( title = category )
-        routine.is_alarm = 1 if is_alarm else 0
-        
-        routine_result = RoutineResult.objects.get(
-            routine = routine, result = Result.objects.get(result_id = 1), is_deleted = 0
+        routine = Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
+        routine_days = RoutineDay.objects.filter( routine = routine ).select_related('routine')
+
+        routine.title       = title
+        routine.category    = Category.objects.get( title = category )
+        routine.is_alarm    = 1 if is_alarm else 0
+        routine.modified_at = now()
+        routine.save()
+
+        routine_days.delete()
+        RoutineDay.objects.bulk_create(
+            [ RoutineDay( routine = routine, day = _day ) for _day in self.date_convertor(days) ]
         )
 
-        routine_days = RoutineDay.objects.filter( routine = routine )
-
         return Response({
-            "data":    "put",
+            "data":    RoutineIDSerializer(routine).data,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_UPDATE_OK" )).data
         })

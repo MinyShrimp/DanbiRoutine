@@ -151,7 +151,7 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
         return False
 
     # days의 최대 길이가 7 초과인 경우    
-    if len(days) > 7:
+    if len(days) > 7 or len(days) == 0:
         return False
     
     # days에 중복된 값이 있는 경우
@@ -243,22 +243,76 @@ def isClearRoutineListData(data: object, jwt_str: str):
     if not CheckTypes( [day], [str] ):
         return False
     
-    y, m, d = day.split('-')
-    if not CheckTypes( [int(y), int(m), int(d)], [ int, int, int ] ):
-        return False
-
-    date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
-    
     try:
         email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
         account = Account.objects.get( email = email )
+
+        y, m, d = day.split('-')
+        if not CheckTypes( [int(y), int(m), int(d)], [ int, int, int ] ):
+            return False
+
+        date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
 
         routine        = Routine.objects.filter( account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.filter( routine__in = routine, is_deleted = 0 )
         if RoutineDay.objects.filter( routine__in = routine, day = date ).exists() == None:
             return False
     except Exception as e:
-        print(e)
+        return False
+    
+    return True
+
+# UpdateRoutine에서 사용
+def isClearRoutineUpdateData(data: object, jwt_str: str):
+    # JWT 검사
+    if not isClearJWT(jwt_str):
+        return False
+
+    # 키 값이 정상적으로 왔는지
+    if not CheckKeys( 
+        list( data.keys() ), 
+        ["routine_id", "title", "category", "goal", "is_alarm", "days"]
+    ):
+        return False
+
+    # 값들의 자료형이 잘 왔는지
+    routine_id, title, category, goal, is_alarm, days = \
+        data["routine_id"], data["title"], data["category"], data["goal"], data["is_alarm"], data["days"]
+    if not CheckTypes( 
+        [routine_id, title, category, goal, is_alarm, days], 
+        [int, str, str, str, bool, list] 
+    ):
+        return False
+
+    # SQL Injection Check
+    for v in [title, category, goal]:
+        if CheckInjection(v):
+            return False
+
+    # 카테고리들이 유효하게 있는지
+    categorys = Category.objects.all()
+    if not( category in map( lambda x: x.title,  categorys ) ):
+        return False
+
+    # days의 최대 길이가 7 초과인 경우    
+    if len(days) > 7 or len(days) == 0:
+        return False
+    
+    # days에 중복된 값이 있는 경우
+    if len(set(days)) != len(days):
+        return False
+
+    # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
+    for v in days:
+        if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SET", "SUN"] ):
+            return False
+    
+    try:
+        email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
+        account = Account.objects.get( email = email )
+
+        Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
+    except Exception as e:
         return False
     
     return True
