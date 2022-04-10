@@ -1,5 +1,5 @@
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing   import Final
 from jwt      import decode
 from django.utils.timezone import now
@@ -68,14 +68,14 @@ class RoutineView(APIView):
         y, m, d    = data["day"].split('-')
         date       = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
 
-        routine        = Routine.objects.get( routine_id = routine_id, account = account, is_deleted = 0 )
-        routine_result = RoutineResult.objects.get( routine = routine )
-        routine_day    = RoutineDay.objects.get( routine = routine_result, day = date )
+        routine        = Routine.objects.select_related('account').get( routine_id = routine_id, account = account, is_deleted = 0 )
+        routine_result = RoutineResult.objects.select_related('routine').get( routine = routine )
+        routine_day    = RoutineDay.objects.select_related('routine').get( routine = routine, day = date )
 
         routine_result_serializer = { 
-            "id":     routine_day.routine.routine.routine_id,
-            "title":  routine_day.routine.routine.title, 
-            "result": routine_day.routine.result.title,
+            "id":     routine_day.routine.routine_id,
+            "title":  routine_day.routine.title, 
+            "result": routine_result.result.title,
             "day":    routine_day.day
         }
 
@@ -85,6 +85,24 @@ class RoutineView(APIView):
         })
 
     # CREATE
+    def date_convertor(self, _days):
+        day_convertor = { "MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4, "SAT": 5, "SUN": 6 }
+        _now, result  = now(), []
+        today         = _now.weekday()
+
+        for day in _days:
+            # output, weekday = 0, day_convertor[day]
+
+            # if weekday >= today:
+            #     output = weekday - today
+            # elif weekday < today:
+            #     output = 7 - ( today - weekday )
+            weekday = day_convertor[day]
+            output  = ( weekday - today ) if weekday >= today else ( 7 - ( today - weekday ) )
+            result.append( ( _now + timedelta(days = output) ).date() )
+
+        return result
+
     def post(self, request: Request):
         """
         Request:
@@ -129,30 +147,18 @@ class RoutineView(APIView):
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_CREATE_FAIL" ) ).data, status=400 )
 
         # Routine 생성
-        routine = Routine.objects.create( 
+        routine = Routine.objects.select_related('account').create( 
             account = account, category = cateModel, title = title,
             is_alarm = 1 if is_alarm else 0, is_deleted = 0
         )
 
-        routine_result = RoutineResult.objects.create(
+        RoutineResult.objects.create(
             routine = routine, result = Result.objects.get(result_id = 1), is_deleted = 0
         )
-
-        day_convertor = { "MON": 0, "TUE": 1, "WED": 2, "THR": 3, "FRI": 4, "SAT": 5, "SUN": 6 }
-        _now = now()
-        today = _now.weekday()
-        for day in days:
-            output, weekday = 0, day_convertor[day]
-
-            if weekday >= today:
-                output = weekday - today
-            elif weekday < today:
-                output = 7 - ( today - weekday )
-
-            RoutineDay.objects.create(
-                routine = routine_result, 
-                day = date( _now.year, _now.month, _now.day + output )
-            )
+        
+        RoutineDay.objects.bulk_create(
+            [ RoutineDay( routine = routine, day = _day ) for _day in self.date_convertor(days) ]
+        )
 
         return Response({
             "data":    RoutineIDSerializer(routine).data,
@@ -203,12 +209,14 @@ class RoutineView(APIView):
         # body data 꺼내기
         routine_id = data["routine_id"]
 
-        routine = Routine.objects.get(routine_id = routine_id)
+        routine = Routine.objects.get( routine_id = routine_id )
         self.delete_model(routine)
 
-        routine_result = RoutineResult.objects.get(routine_id = routine_id)
+        routine_result = RoutineResult.objects.get( routine = routine )
         self.delete_model(routine_result)
 
+        RoutineDay.objects.filter( routine = routine ).delete()
+        
         return Response({
             "data":    RoutineIDSerializer(routine).data,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_DELETE_OK" )).data
@@ -222,11 +230,12 @@ class RoutineView(APIView):
             "token": "j.w.t"
         }
         body: {
-            "title"    : "(Optional)"
-            "category" : "(Optional)",
-            "goal"     : "(Optional)",
-            "is_alarm" : "(Optional)",
-            "days"     : (Optional)
+            "routine_id" : 5,
+            "title"      : "test1",
+            "category"   : "HOMEWORK",
+            "goal"       : "test2",
+            "is_alarm"   : true,
+            "days"       : [ "MON" ]
         }
 
         Response:
@@ -243,6 +252,32 @@ class RoutineView(APIView):
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 
+        # # 데이터 검증
+        # if not isClearRoutineDeleteData(data, jwt_str):
+        #     return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
+
+        # header에 있는 JWT 꺼내기
+        email     = decode(jwt_str, SECRET_KEY)["email"]
+        account   = Account.objects.get( email = email )
+
+        # 로그인 상태인지 확인
+        if account.is_login == 0:
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
+
+        # body data 꺼내기
+        routine_id, title, category, goal, is_alarm, days = \
+            data["routine_id"], data["title"], data["category"], data["goal"], data["is_alarm"], data["days"]
+
+        routine = Routine.objects.select_related('account').get( routine_id = routine_id, account = account, is_deleted = 0 )
+        routine.title = title
+        routine.category = Category.objects.get( title = category )
+        routine.is_alarm = 1 if is_alarm else 0
+        
+        routine_result = RoutineResult.objects.get(
+            routine = routine, result = Result.objects.get(result_id = 1), is_deleted = 0
+        )
+
+        routine_days = RoutineDay.objects.filter( routine = routine )
 
         return Response({
             "data":    "put",

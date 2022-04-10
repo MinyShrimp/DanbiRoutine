@@ -50,7 +50,7 @@ class RoutinesSearch(APIView):
 
         # 데이터 검증
         if not isClearRoutineListData(data, jwt_str):
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_DETAIL_FAIL" ) ).data, status=400 )
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
         
         # header에 있는 JWT 꺼내기
         email     = decode(jwt_str, SECRET_KEY)["email"]
@@ -58,22 +58,23 @@ class RoutinesSearch(APIView):
 
         # 로그인 상태인지 확인
         if account.is_login == 0:
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_DETAIL_FAIL" ) ).data, status=400 )
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
 
         # body data 꺼내기
         y, m, d = request.data["day"].split('-')
         ts = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
 
-        routine        = Routine.objects.filter( account = account, is_deleted = 0 )
-        routine_result = RoutineResult.objects.filter( routine__in = routine, is_deleted = 0 )
-        routine_days   = RoutineDay.objects.filter( routine__in = routine_result, day = ts )
-        routine_days_serializer = [{ 
-            "id":     day.routine.routine.routine_id, 
-            "result": day.routine.result.title, 
-            "title":  day.routine.routine.title 
-        } for day in routine_days ]
+        routine        = Routine.objects.filter( account = account, is_deleted = 0 ).select_related('account')
+        routine_days   = RoutineDay.objects.filter( routine__in = routine, day = ts ).select_related('routine')
+        routine_result = RoutineResult.objects.filter( routine__in = routine_days.values('routine'), is_deleted = 0 ).select_related('routine')
+
+        serializer = [{ 
+            "day":        day.routine.routine_id, 
+            "title":      day.routine.title,
+            "result":     result.result.title 
+        } for day, result in zip(routine_days, routine_result) ]
 
         return Response({
-            "data":    routine_days_serializer,
+            "data":    serializer,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_LIST_OK" )).data
         })

@@ -190,8 +190,10 @@ def isClearRoutineDeleteData(data: object, jwt_str: str):
     try:
         email = jwt.decode(jwt_str, SECRET_KEY)["email"]
         Account.objects.get( email = email )
-        Routine.objects.get( routine_id = routine_id, is_deleted = 0 )
-        RoutineResult.objects.get(routine_id = routine_id, is_deleted = 0)
+        routine = Routine.objects.get( routine_id = routine_id, is_deleted = 0 )
+        RoutineResult.objects.get(routine = routine, is_deleted = 0)
+        if RoutineDay.objects.filter( routine = routine ).exists() == None:
+            return False
     except Exception as e:
         return False
     
@@ -220,7 +222,7 @@ def isClearRoutineDetailData(data: object, jwt_str: str):
 
         routine        = Routine.objects.get( routine_id = routine_id, account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.get( routine = routine )
-        routine_day    = RoutineDay.objects.get( routine = routine_result, day = date )
+        routine_day    = RoutineDay.objects.get( routine = routine, day = date )
     except Exception as e:
         return False
     
@@ -253,7 +255,7 @@ def isClearRoutineListData(data: object, jwt_str: str):
 
         routine        = Routine.objects.filter( account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.filter( routine__in = routine, is_deleted = 0 )
-        if RoutineDay.objects.filter( routine__in = routine_result, day = date ).exists() == None:
+        if RoutineDay.objects.filter( routine__in = routine, day = date ).exists() == None:
             return False
     except Exception as e:
         print(e)
