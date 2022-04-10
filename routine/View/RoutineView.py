@@ -10,6 +10,7 @@ from rest_framework.response   import Response
 from rest_framework.request    import Request
 from rest_framework.decorators import APIView
 
+from routine.MetadataClass.Autho import Autho
 from routine.Model.Account       import Account
 from routine.Model.Message       import Message
 from routine.Model.Category      import Category
@@ -19,10 +20,20 @@ from routine.Model.RoutineDay    import RoutineDay
 from routine.Model.RoutineResult import RoutineResult
 from routine.Serializer.Message  import MessageSerializer
 from routine.Serializer.Routine  import RoutineIDSerializer
-from routine.Functions.ClearData import isClearRoutineCreateData, isClearRoutineDeleteData, isClearRoutineDetailData, isClearRoutineUpdateData
+from routine.Functions.ClearData import isClearJWT, isClearRoutineCreateData, isClearRoutineDeleteData, isClearRoutineDetailData, isClearRoutineUpdateData
 
 # /api/routine
 class RoutineView(APIView):
+    # OPTIONS
+    # metadata_class = Autho
+    def options(self, request: Request):
+        jwt_str: Final = request.META.get('HTTP_TOKEN')
+
+        if not isClearJWT(jwt_str):
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_ERROR" ) ).data, status=400 )
+
+        return Response('ok')
+
     # SEARCH
     def get(self, request: Request):
         """

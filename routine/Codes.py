@@ -19,5 +19,7 @@ MSG_STATUS = {
     "ROUTINE_LOGOUT_OK"            : "성공적으로 로그아웃되었습니다.",
     "ROUTINE_LOGOUT_FAIL"          : "로그아웃을 실패했습니다.",
 
+    "ROUTINE_JWT_ERROR"            : "Token 만료.",
+
     "ROUTINE_UNVAILED"             : "알 수 없는 이유",
 }
