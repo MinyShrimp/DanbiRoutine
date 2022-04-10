@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from typing   import Final
 from jwt      import decode
 from django.utils.timezone import now
+from logging  import getLogger
 
 from api.settings import SECRET_KEY
 
@@ -10,7 +11,6 @@ from rest_framework.response   import Response
 from rest_framework.request    import Request
 from rest_framework.decorators import APIView
 
-from routine.MetadataClass.Autho import Autho
 from routine.Model.Account       import Account
 from routine.Model.Message       import Message
 from routine.Model.Category      import Category
@@ -22,17 +22,21 @@ from routine.Serializer.Message  import MessageSerializer
 from routine.Serializer.Routine  import RoutineIDSerializer
 from routine.Functions.ClearData import isClearJWT, isClearRoutineCreateData, isClearRoutineDeleteData, isClearRoutineDetailData, isClearRoutineUpdateData
 
+logger = getLogger('danbi.routine')
+
 # /api/routine
 class RoutineView(APIView):
-    # OPTIONS
-    # metadata_class = Autho
-    def options(self, request: Request):
-        jwt_str: Final = request.META.get('HTTP_TOKEN')
+    def date_convertor(self, _days):
+        day_convertor = { "MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4, "SAT": 5, "SUN": 6 }
+        _now, result  = now(), []
+        today         = _now.weekday()
 
-        if not isClearJWT(jwt_str):
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_ERROR" ) ).data, status=400 )
+        for day in _days:
+            weekday = day_convertor[day]
+            output  = ( weekday - today ) if weekday >= today else ( 7 - ( today - weekday ) )
+            result.append( ( _now + timedelta(days = output) ).date() )
 
-        return Response('ok')
+        return result
 
     # SEARCH
     def get(self, request: Request):
@@ -62,6 +66,11 @@ class RoutineView(APIView):
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 
+        # JWT 검증
+        if not isClearJWT(jwt_str):
+            logger.error( "ROUTINE_JWT_FAIL" )
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
+
         # 데이터 검증
         if not isClearRoutineDetailData(data, jwt_str):
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DETAIL_FAIL" ) ).data, status=400 )
@@ -90,24 +99,14 @@ class RoutineView(APIView):
             "day":    routine_day.day
         }
 
+        logger.info( "ROUTINE_DETAIL_OK" )
+
         return Response({
             "data":    routine_result_serializer,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_DETAIL_OK" )).data
         })
 
     # CREATE
-    def date_convertor(self, _days):
-        day_convertor = { "MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4, "SAT": 5, "SUN": 6 }
-        _now, result  = now(), []
-        today         = _now.weekday()
-
-        for day in _days:
-            weekday = day_convertor[day]
-            output  = ( weekday - today ) if weekday >= today else ( 7 - ( today - weekday ) )
-            result.append( ( _now + timedelta(days = output) ).date() )
-
-        return result
-
     def post(self, request: Request):
         """
         Request:
@@ -134,6 +133,10 @@ class RoutineView(APIView):
         """
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
+
+        # JWT 검증
+        if not isClearJWT(jwt_str):
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
         # 데이터 검증
         if not isClearRoutineCreateData(data, jwt_str):
@@ -199,6 +202,10 @@ class RoutineView(APIView):
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 
+        # JWT 검증
+        if not isClearJWT(jwt_str):
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
+
         # 데이터 검증
         if not isClearRoutineDeleteData(data, jwt_str):
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
@@ -257,7 +264,11 @@ class RoutineView(APIView):
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 
-        # # 데이터 검증
+        # JWT 검증
+        if not isClearJWT(jwt_str):
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
+
+        # 데이터 검증
         if not isClearRoutineUpdateData(data, jwt_str):
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_UPDATE_FAIL" ) ).data, status=400 )
 

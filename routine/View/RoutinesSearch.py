@@ -14,7 +14,7 @@ from routine.Model.Routine        import Routine
 from routine.Model.RoutineDay     import RoutineDay
 from routine.Model.RoutineResult  import RoutineResult
 from routine.Serializer.Message   import MessageSerializer
-from routine.Functions.ClearData  import isClearRoutineListData
+from routine.Functions.ClearData  import isClearJWT, isClearRoutineListData
 
 """
 기간 검색 View
@@ -47,6 +47,10 @@ class RoutinesSearch(APIView):
     def get(self, request: Request):
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
+
+        # JWT 검증
+        if not isClearJWT(jwt_str):
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
 
         # 데이터 검증
         if not isClearRoutineListData(data, jwt_str):

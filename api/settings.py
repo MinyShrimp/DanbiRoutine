@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from datetime import timedelta
+import logging
 import os
 from pathlib import Path
 from . import config
@@ -25,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -135,3 +136,103 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# LOGGING
+class IPAddressFilter(logging.Filter):
+    def filter(self, record):
+        if hasattr(record, 'request'):
+            x_forwarded_for = record.request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                record.ip = x_forwarded_for.split(',')[0]
+            else:
+                record.ip = record.request.META.get('REMOTE_ADDR')
+        return True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'add_ip_address': {
+            '()': 'api.settings.IPAddressFilter'
+        }
+    },
+    'formatters': {
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '| {levelname} | {asctime} | {message} |',
+            'style': '{',
+        },
+        'standard': {
+            'format': '| %(levelname)-7s | %(asctime)s | %(message)s |',
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        },
+        'request': {
+            'format': '| %(levelname)-7s | %(asctime)s | %(ip)-15s | %(message)s |',
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler'
+        },
+        'django.server': {
+            'level': 'INFO',
+            "class": "logging.handlers.RotatingFileHandler",
+            'formatter': 'django.server',
+            "filename": BASE_DIR / "logs/django_server.log",
+            "maxBytes": 1024*1024*5,  # 5 MB
+            "backupCount": 5
+        },
+        "file": {
+            'level': 'INFO',
+            'encoding': 'utf-8',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'standard',
+            'filename': BASE_DIR / 'logs/danbi_routine.log',
+            'maxBytes': 1024*1024*5,  # 5 MB
+            'backupCount': 5
+        },
+        "request": {
+            "level": "INFO",
+            'encoding': 'utf-8',
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "request",
+            "filename": BASE_DIR / "logs/requests.log",
+            "maxBytes": 1024*1024*5,  # 5 MB
+            "backupCount": 5
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'django.utils': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['django.server'],
+            'level': 'INFO',
+        },
+        'django.request': {
+            "level": "WARNING",
+            'filters': ['add_ip_address'],
+            "handlers": ["request"]
+        },
+        'danbi.routine': {
+            'level': 'INFO',
+            'filters': ['add_ip_address'],
+            'handlers': ['file'],
+        },
+    }
+}

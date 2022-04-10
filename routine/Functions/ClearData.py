@@ -3,7 +3,7 @@ from datetime import datetime
 import re
 from typing import Final
 
-import jwt
+import jwt, logging
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.settings import SECRET_KEY
@@ -13,6 +13,8 @@ from routine.Model.Category      import Category
 from routine.Model.Routine       import Routine
 from routine.Model.RoutineDay    import RoutineDay
 from routine.Model.RoutineResult import RoutineResult
+
+logger = logging.getLogger('danbi.routine')
 
 def CheckEmail(email: str) -> bool:
     regex: Final = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}([.]\w{2,3})?$'
@@ -121,10 +123,6 @@ def isClearLoginData(data: object):
 
 # CreateRoutine에서 사용
 def isClearRoutineCreateData(data: object, jwt_str: str):
-    # JWT 검사
-    if not isClearJWT(jwt_str):
-        return False
-
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( 
         list( data.keys() ), 
@@ -167,17 +165,14 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
         email = jwt.decode(jwt_str, SECRET_KEY)["email"]
         Account.objects.get( email = email )
         Category.objects.get( title = category )
-    except:
+    except Exception as e:
+        logger.error(e)
         return False
     
     return True
 
 # DeleteRoutine에서 사용
 def isClearRoutineDeleteData(data: object, jwt_str: str):
-    # JWT 검사
-    if not isClearJWT(jwt_str):
-        return False
-
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( list( data.keys() ), ["routine_id"] ):
         return False
@@ -195,16 +190,13 @@ def isClearRoutineDeleteData(data: object, jwt_str: str):
         if RoutineDay.objects.filter( routine = routine ).exists() == None:
             return False
     except Exception as e:
+        logger.error(e)
         return False
     
     return True
 
 # SearchRoutine에서 사용
 def isClearRoutineDetailData(data: object, jwt_str: str):
-    # JWT 검사
-    if not isClearJWT(jwt_str):
-        return False
-
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( list( data.keys() ), ["routine_id", "day"] ):
         return False
@@ -224,16 +216,13 @@ def isClearRoutineDetailData(data: object, jwt_str: str):
         routine_result = RoutineResult.objects.get( routine = routine )
         routine_day    = RoutineDay.objects.get( routine = routine, day = date )
     except Exception as e:
+        logger.error(e)
         return False
     
     return True
 
 # SearchRoutines에서 사용
 def isClearRoutineListData(data: object, jwt_str: str):
-    # JWT 검사
-    if not isClearJWT(jwt_str):
-        return False
-
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( list( data.keys() ), ["day"] ):
         return False
@@ -258,16 +247,13 @@ def isClearRoutineListData(data: object, jwt_str: str):
         if RoutineDay.objects.filter( routine__in = routine, day = date ).exists() == None:
             return False
     except Exception as e:
+        logger.error(e)
         return False
     
     return True
 
 # UpdateRoutine에서 사용
 def isClearRoutineUpdateData(data: object, jwt_str: str):
-    # JWT 검사
-    if not isClearJWT(jwt_str):
-        return False
-
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( 
         list( data.keys() ), 
@@ -313,6 +299,7 @@ def isClearRoutineUpdateData(data: object, jwt_str: str):
 
         Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
     except Exception as e:
+        logger.error(e)
         return False
     
     return True
