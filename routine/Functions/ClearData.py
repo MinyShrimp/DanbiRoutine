@@ -1,4 +1,5 @@
 
+from datetime import datetime
 import re
 from typing import Final
 
@@ -31,6 +32,18 @@ def CheckInjection(s: str) -> bool:
         return True
     
     return False
+
+def CheckKeys( data: list, keys: list ) -> bool:
+    for _ in keys:
+        if not ( _ in data ):
+            return False
+    return True
+
+def CheckTypes( data: list, types: list ) -> bool:
+    for i, j in zip(data, types):
+        if type(i) != j:
+            return False
+    return True
 
 # 이메일 체크
 def isClearEmail(data: object):
@@ -84,16 +97,13 @@ def isClearDataEmailPwd(data: object):
         return False
     
     # 키 값이 정상적으로 왔는지
-    keys = list( data.keys() )
-    for _ in ["email", "pwd"]:
-        if not ( _ in keys ):
-            return False
+    if not CheckKeys( list( data.keys() ), ["email", "pwd"] ):
+        return False
     
     # 값들의 자료형이 잘 왔는지
-    email, pwd = data["email"], data["pwd"]
-    for i, j in zip([email, pwd], [str, str]):
-        if type(i) != j:
-            return False
+    datas = data["email"], data["pwd"]
+    if not CheckTypes( datas, [ str, str ] ):
+        return False
 
     return True
  
@@ -116,16 +126,19 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
         return False
 
     # 키 값이 정상적으로 왔는지
-    keys = list( data.keys() )
-    for _ in ["title", "category", "goal", "is_alarm", "days"]:
-        if not ( _ in keys ):
-            return False
+    if not CheckKeys( 
+        list( data.keys() ), 
+        ["title", "category", "goal", "is_alarm", "days"] 
+    ):
+        return False
 
     # 값들의 자료형이 잘 왔는지
     title, category, goal, is_alarm, days = data["title"], data["category"], data["goal"], data["is_alarm"], data["days"]
-    for i, j in zip([title, category, goal, is_alarm, days], [str, str, str, bool, list]):
-        if type(i) != j:
-            return False
+    if not CheckTypes( 
+        [title, category, goal, is_alarm, days], 
+        [str, str, str, bool, list] 
+    ):
+        return False
     
     # SQL Injection Check
     for v in [title, category, goal]:
@@ -166,13 +179,12 @@ def isClearRoutineDeleteData(data: object, jwt_str: str):
         return False
 
     # 키 값이 정상적으로 왔는지
-    keys = list( data.keys() )
-    if not ( "routine_id" in keys ):
+    if not CheckKeys( list( data.keys() ), ["routine_id"] ):
         return False
 
     # 값들의 자료형이 잘 왔는지
     routine_id = data["routine_id"]
-    if type(routine_id) != int:
+    if not CheckTypes( [routine_id], [int] ):
         return False
     
     try:
@@ -181,6 +193,70 @@ def isClearRoutineDeleteData(data: object, jwt_str: str):
         Routine.objects.get( routine_id = routine_id, is_deleted = 0 )
         RoutineResult.objects.get(routine_id = routine_id, is_deleted = 0)
     except Exception as e:
+        return False
+    
+    return True
+
+# SearchRoutine에서 사용
+def isClearRoutineDetailData(data: object, jwt_str: str):
+    # JWT 검사
+    if not isClearJWT(jwt_str):
+        return False
+
+    # 키 값이 정상적으로 왔는지
+    if not CheckKeys( list( data.keys() ), ["routine_id", "day"] ):
+        return False
+
+    # 값들의 자료형이 잘 왔는지
+    routine_id, day = data["routine_id"], data["day"]
+    if not CheckTypes( [ routine_id, day ], [int, str] ):
+        return False
+    
+    try:
+        email = jwt.decode(jwt_str, SECRET_KEY)["email"]
+        account = Account.objects.get( email = email )
+        y, m, d = day.split('-')
+        date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
+
+        routine        = Routine.objects.get( routine_id = routine_id, account = account, is_deleted = 0 )
+        routine_result = RoutineResult.objects.get( routine = routine )
+        routine_day    = RoutineDay.objects.get( routine = routine_result, day = date )
+    except Exception as e:
+        return False
+    
+    return True
+
+# SearchRoutines에서 사용
+def isClearRoutineListData(data: object, jwt_str: str):
+    # JWT 검사
+    if not isClearJWT(jwt_str):
+        return False
+
+    # 키 값이 정상적으로 왔는지
+    if not CheckKeys( list( data.keys() ), ["day"] ):
+        return False
+
+    # 값들의 자료형이 잘 왔는지
+    day = data["day"]
+    if not CheckTypes( [day], [str] ):
+        return False
+    
+    y, m, d = day.split('-')
+    if not CheckTypes( [int(y), int(m), int(d)], [ int, int, int ] ):
+        return False
+
+    date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
+    
+    try:
+        email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
+        account = Account.objects.get( email = email )
+
+        routine        = Routine.objects.filter( account = account, is_deleted = 0 )
+        routine_result = RoutineResult.objects.filter( routine__in = routine, is_deleted = 0 )
+        if RoutineDay.objects.filter( routine__in = routine_result, day = date ).exists() == None:
+            return False
+    except Exception as e:
+        print(e)
         return False
     
     return True

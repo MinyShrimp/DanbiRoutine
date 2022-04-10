@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from routine.Model.Result import Result
 from routine.Model.Routine import Routine
+from routine.Model.RoutineDay import RoutineDay
 from routine.Model.RoutineResult import RoutineResult
 
 class RoutineIDSerializer(serializers.ModelSerializer):
@@ -33,3 +34,11 @@ class RoutineResultSerializer(serializers.ModelSerializer):
     class Meta:
         model  = RoutineResult
         fields = ['routine', 'result']
+    
+class RoutineDaySerializer(serializers.ModelSerializer):
+    routine = RoutineResultSerializer()
+    day     = serializers.DateTimeField()
+    
+    class Meta:
+        model = RoutineDay
+        field = ['routine', 'day']

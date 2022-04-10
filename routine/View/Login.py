@@ -1,7 +1,6 @@
 
 from typing import Final
 
-import pytz
 from django.utils.timezone import now
 
 from rest_framework.response      import Response
