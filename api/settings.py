@@ -14,6 +14,7 @@ from datetime import timedelta
 import logging
 import os
 from pathlib import Path
+from corsheaders.defaults import default_headers
 from . import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,7 +52,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'api.urls'
@@ -97,8 +98,9 @@ SIMPLE_JWT = {
 REST_USE_JWT = True
 
 # CORS 관련 추가 
-CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:8004' ,'http://localhost:8004'] 
+CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000' ,'http://localhost:3000'] 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = list(default_headers) + [ 'token' ]
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
