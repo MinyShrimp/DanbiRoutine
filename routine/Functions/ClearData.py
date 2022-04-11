@@ -8,7 +8,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.settings import SECRET_KEY
 
-from routine.Log.Log             import ErrorLog
+from routine.Log.Log             import ErrorLog, Log
 from routine.Model.Account       import Account
 from routine.Model.Category      import Category
 from routine.Model.Routine       import Routine
@@ -86,7 +86,8 @@ def isClearJWT(data: str):
     try:
         autho = str( JWTAuthentication().get_validated_token( data ) )
         return autho == data
-    except:
+    except Exception as e:
+        Log.instance().error("UNVAILD_TOKEN")
         return False
 
 # Signup에서 사용

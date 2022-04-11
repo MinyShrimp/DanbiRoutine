@@ -21,6 +21,8 @@ MSG_STATUS = {
 
     "ROUTINE_JWT_OK"               : "",
     "ROUTINE_JWT_FAIL"             : "Token 만료.",
+    "ROUTINE_JWT_REFRESH_FAIL"     : "Token Refresh 실패",
+    "ROUTINE_JWT_REFRESH_UNVAILED" : "Token Refresh 실패",
 
     "ROUTINE_UNVAILED"             : "알 수 없는 이유",
 }

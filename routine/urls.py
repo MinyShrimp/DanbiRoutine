@@ -1,5 +1,6 @@
 
 from django.urls import path
+from routine.Token.Refresh import Refresh
 
 from routine.View.Login          import Login
 from routine.View.Logout         import Logout
@@ -9,11 +10,13 @@ from routine.View.RoutineView    import RoutineView
 
 urlpatterns = [
     #path('hello/', helloAPI),
-    
+
     path('signup/', SignUp),
     path('login/',  Login),
     path('logout/', Logout),
 
     path('routine/', RoutineView.as_view()),
-    path('routines/', RoutinesSearch.as_view())
+    path('routines/', RoutinesSearch.as_view()),
+
+    path('refresh/', Refresh.as_view())
 ]
