@@ -42,12 +42,12 @@ def Login(request: Request):
 
     # 이미 로그인이 되어있는지 확인
     if account.is_login == 1:
-        Log.instance().error( "LOGIN: ROUTINE_ALREADY_LOGIN" )
+        Log.instance().error( "LOGIN: ROUTINE_ALREADY_LOGIN", account.account_id )
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGIN_FAIL" ) ).data, status=400 )
 
     # 비밀번호 비교
     if GetPwd( data["pwd"].encode('ascii'), salt ) != pwd:
-        Log.instance().error( "LOGIN: ROUTINE_LOGIN_MISMATCH_PWD" )
+        Log.instance().error( "LOGIN: ROUTINE_LOGIN_MISMATCH_PWD", account.account_id )
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGIN_MISMATCH_PWD" ) ).data, status=400 )
 
     # JWT 생성

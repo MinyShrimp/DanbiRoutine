@@ -5,6 +5,7 @@ resources
 db.sqlite3
 config.py
 staticfiles
+static
 .env
 db
 logs

@@ -17,14 +17,26 @@ class SingletonInstane:
 class Log(SingletonInstane):
     logger = getLogger('danbi.routine')
 
-    def error( self, msg: str ):
-        self.logger.error( msg )
+    def get_str( self, msg, *args ):
+        _str = msg
+        for arg in args:
+            _str += " | {}".format(arg)
+        return _str
 
-    def info( self, msg: str, id: int ):
-        self.logger.info( "{} | {}".format(msg, id) )
+    def error( self, msg: str, *args ):
+        self.logger.error( self.get_str( msg, *args ) )
+
+    def info( self, msg: str, *args ):
+        self.logger.info( self.get_str( msg, *args ) )
+
+    def warning( self, msg: str, *args ):
+        self.logger.warning( self.get_str( msg, *args ) )
     
-    def warning( self, msg: str ):
-        self.logger.warning( msg )
+    def critical( self, msg: str, *args ):
+        self.logger.critical( self.get_str( msg, *args ) )
     
-    def critical( self, msg: str ):
-        self.logger.critical( msg )
+class ErrorLog(Log):
+    logger = getLogger('danbi.error')
+
+    def error( self, msg: str, *args ):
+        self.logger.error( self.get_str( msg, *args ) )

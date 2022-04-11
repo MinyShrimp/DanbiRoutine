@@ -46,7 +46,7 @@ def Logout(request: Request):
 
     # 이미 로그아웃이 되어있는지 확인
     if account.is_login == 0:
-        Log.instance().error( "LOGOUT: ROUTINE_NOT_LOGIN" )
+        Log.instance().error( "LOGOUT: ROUTINE_NOT_LOGIN", account.account_id )
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGOUT_FAIL" ) ).data, status=400 )
 
     # 로그아웃 정보 DB에 저장

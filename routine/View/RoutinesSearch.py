@@ -53,19 +53,19 @@ class RoutinesSearch(APIView):
         if not isClearJWT(jwt_str):
             Log.instance().error( "SEARCHs: ROUTINE_JWT_FAIL" )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
-
-        # 데이터 검증
-        if not isClearRoutineListData(data, jwt_str):
-            Log.instance().error( "SEARCHs: ROUTINE_LIST_FAIL" )
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
         
         # header에 있는 JWT 꺼내기
         email     = decode(jwt_str, SECRET_KEY)["email"]
         account   = Account.objects.get( email = email )
 
+        # 데이터 검증
+        if not isClearRoutineListData(data, jwt_str):
+            Log.instance().error( "SEARCHs: ROUTINE_LIST_FAIL", account.account_id )
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
+        
         # 로그인 상태인지 확인
         if account.is_login == 0:
-            Log.instance().error( "SEARCHs: ROUTINE_NOT_LOGIN" )
+            Log.instance().error( "SEARCHs: ROUTINE_NOT_LOGIN", account.account_id )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
 
         # body data 꺼내기
@@ -82,7 +82,7 @@ class RoutinesSearch(APIView):
             "result":     result.result.title 
         } for day, result in zip(routine_days, routine_result) ]
 
-        Log.instance().info( "SEARCHs: ROUTINE_LIST_OK", routine.routine_id )
+        Log.instance().info( "SEARCHs: ROUTINE_LIST_OK", account.account_id )
         return Response({
             "data":    serializer,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_LIST_OK" )).data

@@ -3,18 +3,17 @@ from datetime import datetime
 import re
 from typing import Final
 
-import jwt, logging
+import jwt
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.settings import SECRET_KEY
 
+from routine.Log.Log             import ErrorLog
 from routine.Model.Account       import Account
 from routine.Model.Category      import Category
 from routine.Model.Routine       import Routine
 from routine.Model.RoutineDay    import RoutineDay
 from routine.Model.RoutineResult import RoutineResult
-
-logger = logging.getLogger('danbi.routine')
 
 def CheckEmail(email: str) -> bool:
     regex: Final = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}([.]\w{2,3})?$'
@@ -116,7 +115,8 @@ def isClearLoginData(data: object):
     
     try:
         Account.objects.get(email = data["email"])
-    except:
+    except Exception as e:
+        ErrorLog.instance().error(e)
         return False
 
     return True
@@ -166,7 +166,7 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
         Account.objects.get( email = email )
         Category.objects.get( title = category )
     except Exception as e:
-        logger.error(e)
+        ErrorLog.instance().error(e)
         return False
     
     return True
@@ -190,7 +190,7 @@ def isClearRoutineDeleteData(data: object, jwt_str: str):
         if RoutineDay.objects.filter( routine = routine ).exists() == None:
             return False
     except Exception as e:
-        logger.error(e)
+        ErrorLog.instance().error(e)
         return False
     
     return True
@@ -216,7 +216,7 @@ def isClearRoutineDetailData(data: object, jwt_str: str):
         routine_result = RoutineResult.objects.get( routine = routine )
         routine_day    = RoutineDay.objects.get( routine = routine, day = date )
     except Exception as e:
-        logger.error(e)
+        ErrorLog.instance().error(e)
         return False
     
     return True
@@ -247,7 +247,7 @@ def isClearRoutineListData(data: object, jwt_str: str):
         if RoutineDay.objects.filter( routine__in = routine, day = date ).exists() == None:
             return False
     except Exception as e:
-        logger.error(e)
+        ErrorLog.instance().error(e)
         return False
     
     return True
@@ -299,7 +299,7 @@ def isClearRoutineUpdateData(data: object, jwt_str: str):
 
         Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
     except Exception as e:
-        logger.error(e)
+        ErrorLog.instance().error(e)
         return False
     
     return True

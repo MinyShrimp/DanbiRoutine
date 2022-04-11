@@ -164,9 +164,8 @@ LOGGING = {
     },
     'formatters': {
         'django.server': {
-            '()': 'django.utils.log.ServerFormatter',
-            'format': '| {levelname} | {asctime} | {message} |',
-            'style': '{',
+            'format': '| %(levelname)-7s | %(asctime)s | %(message)s |',
+            "datefmt": "%Y-%m-%d %H:%M:%S"
         },
         'standard': {
             'format': '| %(levelname)-7s | %(asctime)s | %(message)s |',
@@ -185,13 +184,14 @@ LOGGING = {
         },
         'django.server': {
             'level': 'INFO',
+            'encoding': 'utf-8',
             "class": "logging.handlers.RotatingFileHandler",
             'formatter': 'django.server',
             "filename": BASE_DIR / "logs/django_server.log",
             "maxBytes": 1024*1024*5,  # 5 MB
             "backupCount": 5
         },
-        "file": {
+        "danbi": {
             'level': 'INFO',
             'encoding': 'utf-8',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -209,6 +209,15 @@ LOGGING = {
             "maxBytes": 1024*1024*5,  # 5 MB
             "backupCount": 5
         },
+        "error_file": {
+            "level": "ERROR",
+            'encoding': 'utf-8',
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "standard",
+            "filename": BASE_DIR / "logs/errors.log",
+            "maxBytes": 1024*1024*5,  # 5 MB
+            "backupCount": 5
+        },
     },
     'loggers': {
         'django': {
@@ -221,18 +230,21 @@ LOGGING = {
             'propagate': False,
         },
         'django.server': {
-            'handlers': ['django.server'],
             'level': 'INFO',
+            'handlers': ['django.server'],
         },
         'django.request': {
-            "level": "WARNING",
+            "level": "INFO",
             'filters': ['add_ip_address'],
             "handlers": ["request"]
         },
         'danbi.routine': {
             'level': 'INFO',
-            'filters': ['add_ip_address'],
-            'handlers': ['file'],
+            'handlers': ['danbi'],
+        },
+        'danbi.error': {
+            'level': 'ERROR',
+            'handlers': ['error_file'],
         },
     }
 }
