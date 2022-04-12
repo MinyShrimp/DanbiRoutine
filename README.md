@@ -4,7 +4,6 @@
 * Python - Django, DRF
 * MySQL
 * Docker
-* AWS
 
 ## 기간
 2022-04-07 (목) ~ 2022-04-14 (목) 1주일
