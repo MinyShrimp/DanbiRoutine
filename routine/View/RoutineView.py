@@ -20,22 +20,11 @@ from routine.Model.RoutineDay    import RoutineDay
 from routine.Model.RoutineResult import RoutineResult
 from routine.Serializer.Message  import MessageSerializer
 from routine.Serializer.Routine  import RoutineIDSerializer
-from routine.Functions.ClearData import isClearJWT, isClearRoutineCreateData, isClearRoutineDeleteData, isClearRoutineDetailData, isClearRoutineUpdateData
+from routine.Functions.ClearData import isClearJWT, isClearRoutineCreateData, isClearRoutineDetailData, isClearRoutineUpdateData
+from routine.Functions.DateUtils import DateSort 
 
 # /api/routine
 class RoutineView(APIView):
-    def date_convertor(self, _days):
-        day_convertor = { "MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4, "SAT": 5, "SUN": 6 }
-        _now, result  = now(), []
-        today         = _now.weekday()
-
-        for day in _days:
-            weekday = day_convertor[day]
-            output  = ( weekday - today ) if weekday >= today else ( 7 - ( today - weekday ) )
-            result.append( ( _now + timedelta(days = output) ).date() )
-
-        return result
-
     # SEARCH
     def get(self, request: Request):
         """
@@ -44,8 +33,7 @@ class RoutineView(APIView):
             "token": "j.w.t"
         }
         body: {
-            "routine_id" : 3,
-            "day": "2022-04-11"
+            "routine_id" : 3
         }
 
         Response:
@@ -78,7 +66,6 @@ class RoutineView(APIView):
             Log.instance().error( "SEARCH: ROUTINE_DETAIL_FAIL", account.account_id )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DETAIL_FAIL" ) ).data, status=400 )
 
-
         # 로그인 상태인지 확인
         if account.is_login == 0:
             Log.instance().error( "SEARCH: ROUTINE_NOT_LOGIN", account.account_id )
@@ -86,23 +73,21 @@ class RoutineView(APIView):
         
         # body data 꺼내기
         routine_id = data["routine_id"]
-        y, m, d    = data["day"].split('-')
-        date       = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
 
         routine        = Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
-        routine_result = RoutineResult.objects.select_related('routine').get( routine = routine )
-        routine_day    = RoutineDay.objects.select_related('routine').get( routine = routine, day = date )
+        routine_result = RoutineResult.objects.select_related('routine', 'result').get( routine = routine )
+        routine_day    = RoutineDay.objects.filter( routine = routine ).select_related('routine')
 
-        routine_result_serializer = { 
-            "id":     routine_day.routine.routine_id,
-            "title":  routine_day.routine.title, 
+        routine_serializer = {
+            "id": routine.routine_id,
+            "title": routine.title,
             "result": routine_result.result.title,
-            "day":    routine_day.day
+            "days": [ _.day for _ in routine_day ]
         }
 
         Log.instance().info( "SEARCH: ROUTINE_DETAIL_OK", account.account_id, routine.routine_id )
         return Response({
-            "data":    routine_result_serializer,
+            "data":    routine_serializer,
             "message": MessageSerializer(Message.getByCode( "ROUTINE_DETAIL_OK" )).data
         })
 
@@ -168,7 +153,7 @@ class RoutineView(APIView):
         )
         
         RoutineDay.objects.bulk_create(
-            [ RoutineDay( routine = routine, day = _day ) for _day in self.date_convertor(days) ]
+            [ RoutineDay( routine = routine, day = _day ) for _day in DateSort(days) ]
         )
 
         Log.instance().info( "CREATE: ROUTINE_CREATE_OK", account.account_id, routine.routine_id )
@@ -216,7 +201,7 @@ class RoutineView(APIView):
         account   = Account.objects.get( email = email )
 
         # 데이터 검증
-        if not isClearRoutineDeleteData(data, jwt_str):
+        if not isClearRoutineDetailData(data, jwt_str):
             Log.instance().error( "DELETE: ROUTINE_DELETE_FAIL", account.account_id )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_DELETE_FAIL" ) ).data, status=400 )
         
@@ -306,7 +291,7 @@ class RoutineView(APIView):
 
         routine_days.delete()
         RoutineDay.objects.bulk_create(
-            [ RoutineDay( routine = routine, day = _day ) for _day in self.date_convertor(days) ]
+            [ RoutineDay( routine = routine, day = _day ) for _day in DateSort(days) ]
         )
 
         Log.instance().info( "UPDATE: ROUTINE_UPDATE_OK", account.account_id, routine.routine_id )

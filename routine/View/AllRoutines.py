@@ -1,5 +1,3 @@
-
-from datetime import datetime
 from typing   import Final
 from jwt      import decode
 
@@ -15,71 +13,62 @@ from routine.Model.Routine        import Routine
 from routine.Model.RoutineDay     import RoutineDay
 from routine.Model.RoutineResult  import RoutineResult
 from routine.Serializer.Message   import MessageSerializer
-from routine.Functions.ClearData  import isClearJWT, isClearRoutineListData
-from routine.Functions.DateUtils  import day_convertor_value, DateSort
+from routine.Functions.ClearData  import isClearJWT
+from routine.Functions.DateUtils  import DateSort
 
 """
-기간 검색 View
+모든 기록 가져오기 View
 
 Request
-[ /api/routines/, GET ]
+[ /api/all_routines/, GET ]
 header: {
     "token": "j.w.t"
 }
-body: {
-    "day": "2022-04-11"
-}
+body: {}
 
 Response
 {
     "data" : [{
         "id": 2,
         "result": "NOT",
+        "day":    "2022-04-11T00:00:00",
+        "category": "HOMEWORK",
         "title": "test1"
     },
     {
         "id": 3,
         "result": "NOT",
+        "day":    "2022-04-11T00:00:00",
+        "category": "HOMEWORK",
         "title": "test1"
     }],
-    "message": {"msg": "목록 조회를 성공했습니다.", "status": "ROUTINE_LIST_OK"}
+    "message": {"msg": "성공적으로 조회했습니다.", "status": "ROUTINE_ALL_OK"}
 }
 """
-class RoutinesSearch(APIView):
+class AllRoutine(APIView):
     def get(self, request: Request):
-        data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 
         # JWT 검증
         if not isClearJWT(jwt_str):
-            Log.instance().error( "SEARCHs: ROUTINE_JWT_FAIL" )
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_JWT_FAIL" ) ).data, status=400 )
+            Log.instance().error( "SEARCHALL: ROUTINE_ALL_FAIL" )
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_ALL_FAIL" ) ).data, status=400 )
         
         # header에 있는 JWT 꺼내기
         email     = decode(jwt_str, SECRET_KEY)["email"]
         account   = Account.objects.get( email = email )
-
-        # 데이터 검증
-        if not isClearRoutineListData(data, jwt_str):
-            Log.instance().error( "SEARCHs: ROUTINE_LIST_FAIL", account.account_id )
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
         
         # 로그인 상태인지 확인
         if account.is_login == 0:
-            Log.instance().error( "SEARCHs: ROUTINE_NOT_LOGIN", account.account_id )
-            return Response( MessageSerializer( Message.getByCode( "ROUTINE_LIST_FAIL" ) ).data, status=400 )
-
-        # body data 꺼내기
-        y, m, d = request.data["day"].split('-')
-        day = day_convertor_value[datetime(int(y), int(m), int(d), 0, 0, 0, 0).weekday()]
+            Log.instance().error( "SEARCHALL: ROUTINE_NOT_LOGIN", account.account_id )
+            return Response( MessageSerializer( Message.getByCode( "ROUTINE_ALL_FAIL" ) ).data, status=400 )
 
         routine        = Routine.objects.filter( account = account, is_deleted = 0 ).select_related('account', 'category')
-        routine_day    = RoutineDay.objects.filter( routine__in = routine, day = day ).select_related('routine')
-        routine_result = RoutineResult.objects.filter( routine__in = routine_day.values("routine") ).select_related('routine', 'result')
-
+        routine_result = RoutineResult.objects.filter( routine__in = routine ).select_related('routine', 'result')
+        
         serializer = []
         for result in routine_result:
-            routine_days = RoutineDay.objects.filter( routine = result.routine ).select_related('routine')
+            routine_days   = RoutineDay.objects.filter( routine = result.routine ).select_related('routine')
 
             serializer.append({
                 "id": result.routine.routine_id,
@@ -89,8 +78,8 @@ class RoutinesSearch(APIView):
                 "days": DateSort( [ _.day for _ in routine_days ] )
             })
 
-        Log.instance().info( "SEARCHs: ROUTINE_LIST_OK", account.account_id )
+        Log.instance().info( "SEARCHALL: ROUTINE_ALL_OK", account.account_id )
         return Response({
             "data":    serializer,
-            "message": MessageSerializer(Message.getByCode( "ROUTINE_LIST_OK" )).data
+            "message": MessageSerializer(Message.getByCode( "ROUTINE_ALL_OK" )).data
         })

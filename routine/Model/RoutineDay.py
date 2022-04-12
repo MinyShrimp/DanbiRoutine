@@ -4,7 +4,7 @@ from routine.Model.Routine import Routine
 from routine.Model.RoutineResult import RoutineResult
 
 class RoutineDay(models.Model):
-    day            = models.DateTimeField(primary_key = True)
+    day            = models.CharField(primary_key = True, max_length=10)
     routine        = models.ForeignKey(Routine, on_delete = DO_NOTHING)
     created_at     = models.DateTimeField()
     modified_at    = models.DateTimeField()

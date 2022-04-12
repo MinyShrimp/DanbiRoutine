@@ -18,6 +18,8 @@ MSG_STATUS = {
     "ROUTINE_LOGIN_FAIL"           : "로그인을 실패했습니다.",
     "ROUTINE_LOGOUT_OK"            : "성공적으로 로그아웃되었습니다.",
     "ROUTINE_LOGOUT_FAIL"          : "로그아웃을 실패했습니다.",
+    "ROUTINE_ALL_OK"               : "성공적으로 조회했습니다.",
+    "ROUTINE_ALL_FAIL"             : "조회를 실패했습니다.",
 
     "ROUTINE_JWT_OK"               : "",
     "ROUTINE_JWT_FAIL"             : "Token 만료.",

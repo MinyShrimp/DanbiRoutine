@@ -159,7 +159,7 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
 
     # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
     for v in days:
-        if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SET", "SUN"] ):
+        if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] ):
             return False
     
     try:
@@ -172,50 +172,52 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
     
     return True
 
-# DeleteRoutine에서 사용
-def isClearRoutineDeleteData(data: object, jwt_str: str):
+# # DeleteRoutine에서 사용
+# def isClearRoutineDeleteData(data: object, jwt_str: str):
+#     # 키 값이 정상적으로 왔는지
+#     if not CheckKeys( list( data.keys() ), ["routine_id", "day"] ):
+#         return False
+
+#     # 값들의 자료형이 잘 왔는지
+#     routine_id, day = data["routine_id"], data["day"]
+#     if not CheckTypes( [routine_id, day], [int, str] ):
+#         return False
+    
+#     try:
+#         email = jwt.decode(jwt_str, SECRET_KEY)["email"]
+#         Account.objects.get( email = email )
+#         y, m, d = day.split('-')
+#         date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
+
+#         routine = Routine.objects.get( routine_id = routine_id, is_deleted = 0 )
+#         RoutineResult.objects.get(routine = routine, is_deleted = 0)
+#         RoutineDay.objects.get( routine = routine, day = date )
+#     except Exception as e:
+#         ErrorLog.instance().error(e)
+#         return False
+    
+#     return True
+
+# DeleteRoutine, SearchRoutine에서 사용
+def isClearRoutineDetailData(data: object, jwt_str: str):
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( list( data.keys() ), ["routine_id"] ):
         return False
 
     # 값들의 자료형이 잘 왔는지
     routine_id = data["routine_id"]
-    if not CheckTypes( [routine_id], [int] ):
-        return False
-    
-    try:
-        email = jwt.decode(jwt_str, SECRET_KEY)["email"]
-        Account.objects.get( email = email )
-        routine = Routine.objects.get( routine_id = routine_id, is_deleted = 0 )
-        RoutineResult.objects.get(routine = routine, is_deleted = 0)
-        if RoutineDay.objects.filter( routine = routine ).exists() == None:
-            return False
-    except Exception as e:
-        ErrorLog.instance().error(e)
-        return False
-    
-    return True
-
-# SearchRoutine에서 사용
-def isClearRoutineDetailData(data: object, jwt_str: str):
-    # 키 값이 정상적으로 왔는지
-    if not CheckKeys( list( data.keys() ), ["routine_id", "day"] ):
-        return False
-
-    # 값들의 자료형이 잘 왔는지
-    routine_id, day = data["routine_id"], data["day"]
-    if not CheckTypes( [ routine_id, day ], [int, str] ):
+    if not CheckTypes( [ routine_id ], [int] ):
         return False
     
     try:
         email = jwt.decode(jwt_str, SECRET_KEY)["email"]
         account = Account.objects.get( email = email )
-        y, m, d = day.split('-')
-        date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
+        # y, m, d = day.split('-')
+        # date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
 
         routine        = Routine.objects.get( routine_id = routine_id, account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.get( routine = routine )
-        routine_day    = RoutineDay.objects.get( routine = routine, day = date )
+        # routine_day    = RoutineDay.objects.get( routine = routine, day = date )
     except Exception as e:
         ErrorLog.instance().error(e)
         return False
@@ -241,12 +243,12 @@ def isClearRoutineListData(data: object, jwt_str: str):
         if not CheckTypes( [int(y), int(m), int(d)], [ int, int, int ] ):
             return False
 
-        date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
-
         routine        = Routine.objects.filter( account = account, is_deleted = 0 )
-        routine_result = RoutineResult.objects.filter( routine__in = routine, is_deleted = 0 )
-        if RoutineDay.objects.filter( routine__in = routine, day = date ).exists() == None:
+        routine_day    = RoutineDay.objects.filter( routine__in = routine, day = day )
+        routine_result = RoutineResult.objects.filter( routine__in = routine_day.values("routine") )
+        if routine.exists() == None or routine_day.exists() == None or routine_result.exists() == None:
             return False
+
     except Exception as e:
         ErrorLog.instance().error(e)
         return False
@@ -291,7 +293,7 @@ def isClearRoutineUpdateData(data: object, jwt_str: str):
 
     # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
     for v in days:
-        if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SET", "SUN"] ):
+        if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] ):
             return False
     
     try:
