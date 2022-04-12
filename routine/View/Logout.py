@@ -27,8 +27,13 @@ body: {}
 
 Response
 {
-    "data":    { "account_id": 0 },
-    "message": { "msg": ".", "status": "ROUTINE_LOGOUT_OK" }
+    "data":    { 
+        "account_id": 0 
+    },
+    "message": { 
+        "msg": "성공적으로 로그아웃되었습니다.", 
+        "status": "ROUTINE_LOGOUT_OK" 
+    }
 }
 """
 @api_view(['POST'])

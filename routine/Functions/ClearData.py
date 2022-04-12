@@ -212,12 +212,9 @@ def isClearRoutineDetailData(data: object, jwt_str: str):
     try:
         email = jwt.decode(jwt_str, SECRET_KEY)["email"]
         account = Account.objects.get( email = email )
-        # y, m, d = day.split('-')
-        # date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
 
         routine        = Routine.objects.get( routine_id = routine_id, account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.get( routine = routine )
-        # routine_day    = RoutineDay.objects.get( routine = routine, day = date )
     except Exception as e:
         ErrorLog.instance().error(e)
         return False
@@ -238,10 +235,6 @@ def isClearRoutineListData(data: object, jwt_str: str):
     try:
         email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
         account = Account.objects.get( email = email )
-
-        y, m, d = day.split('-')
-        if not CheckTypes( [int(y), int(m), int(d)], [ int, int, int ] ):
-            return False
 
         routine        = Routine.objects.filter( account = account, is_deleted = 0 )
         routine_day    = RoutineDay.objects.filter( routine__in = routine, day = day )

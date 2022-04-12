@@ -10,6 +10,19 @@ from routine.Log.Log                 import Log
 from routine.Model.Message           import Message
 from routine.Serializer.Message      import MessageSerializer
 
+"""
+[ /api/refresh, POST ]
+Request
+header: {}
+body: {
+    "refresh": "REFRESH_TOKEN"
+}
+
+Response
+{
+    "access": "ACCESS_TOKEN"
+}
+"""
 class Refresh(APIView):
     def post(self, request: Request):
         refresh_token: Final = request.data["refresh"]

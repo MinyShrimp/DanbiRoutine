@@ -28,12 +28,10 @@ class RoutineView(APIView):
     # SEARCH
     def get(self, request: Request):
         """
+        [ /api/routine/?routine_id=3, GET ]
         Request:
         header: {
             "token": "j.w.t"
-        }
-        body: {
-            "routine_id" : 3
         }
 
         Response:
@@ -41,7 +39,8 @@ class RoutineView(APIView):
             "data": {
                 "id": 4,
                 "title": "test1",
-                "result": "NOT"
+                "result": "NOT",
+                "days": []
             },
             "message": {
                 "msg": "단건 조회를 성공했습니다.",
@@ -49,7 +48,7 @@ class RoutineView(APIView):
             }
         }
         """
-        data:    Final = request.data
+        data:    Final = request.GET
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 
         # JWT 검증
@@ -112,7 +111,8 @@ class RoutineView(APIView):
                 "routine_id": 1
             },
             "message": {
-                "msg": " .", "status": "ROUTINE_CREATE_OK"
+                "msg": "성공적으로 생성되었습니다.", 
+                "status": "ROUTINE_CREATE_OK"
             }
         }
         """
@@ -133,14 +133,14 @@ class RoutineView(APIView):
             Log.instance().error( "CREATE: ROUTINE_CREATE_FAIL", account.account_id )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_CREATE_FAIL" ) ).data, status=400 )
 
-        # body 데이터 꺼내기
-        title, category, goal, is_alarm, days = data["title"], data["category"], data["goal"], data["is_alarm"], data["days"]
-        cateModel = Category.objects.get( title = category )
-
         # 로그인 상태인지 확인
         if account.is_login == 0:
             Log.instance().error( "CREATE: ROUTINE_NOT_LOGIN", account.account_id )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_CREATE_FAIL" ) ).data, status=400 )
+
+        # body 데이터 꺼내기
+        title, category, goal, is_alarm, days = data["title"], data["category"], data["goal"], data["is_alarm"], data["days"]
+        cateModel = Category.objects.get( title = category )
 
         # Routine 생성
         routine = Routine.objects.select_related('account', 'category').create( 
@@ -183,7 +183,7 @@ class RoutineView(APIView):
                 "routine_id": 1
             },
             "message": {
-                "msg": " .", 
+                "msg": "성공적으로 삭제되었습니다.", 
                 "status": "ROUTINE_DELETE_OK"
             }
         }
@@ -249,7 +249,8 @@ class RoutineView(APIView):
                 "routine_id": 1
             },
             "message": {
-                "msg": "성공적으로 업데이트되었습니다.", "status": "ROUTINE_UPDATE_OK"
+                "msg": "성공적으로 업데이트되었습니다.", 
+                "status": "ROUTINE_UPDATE_OK"
             }
         }
         """

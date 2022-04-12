@@ -24,25 +24,31 @@ Request
 header: {
     "token": "j.w.t"
 }
-body: {}
 
 Response
 {
-    "data" : [{
-        "id": 2,
-        "result": "NOT",
-        "day":    "2022-04-11T00:00:00",
-        "category": "HOMEWORK",
-        "title": "test1"
-    },
-    {
-        "id": 3,
-        "result": "NOT",
-        "day":    "2022-04-11T00:00:00",
-        "category": "HOMEWORK",
-        "title": "test1"
-    }],
-    "message": {"msg": "성공적으로 조회했습니다.", "status": "ROUTINE_ALL_OK"}
+    "data" : [
+        {
+            "id": 2,
+            "result": "NOT",
+            "day":    "2022-04-11T00:00:00",
+            "category": "HOMEWORK",
+            "title": "test1",
+            "is_alarm": true
+        },
+        {
+            "id": 3,
+            "result": "NOT",
+            "day":    "2022-04-11T00:00:00",
+            "category": "HOMEWORK",
+            "title": "test1",
+            "is_alarm": true
+        }
+    ],
+    "message": {
+        "msg": "성공적으로 조회했습니다.", 
+        "status": "ROUTINE_ALL_OK"
+    }
 }
 """
 class AllRoutine(APIView):
@@ -75,6 +81,7 @@ class AllRoutine(APIView):
                 "title": result.routine.title,
                 "category": result.routine.category.title,
                 "result": result.result.title,
+                "is_alarm": True if result.routine.is_alarm == 1 else False,
                 "days": DateSort( [ _.day for _ in routine_days ] )
             })
 

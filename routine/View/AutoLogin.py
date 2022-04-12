@@ -27,8 +27,14 @@ body: {}
 
 Response
 {
-    "data":    { "account_id": 0, "token": "a.b.c" },
-    "message": { "msg": ".", "status": "ROUTINE_LOGIN_OK" }
+    "data":    { 
+        "account_id": 0, 
+        "token": "j.w.t" 
+    },
+    "message": { 
+        "msg": "성공적으로 로그인되었습니다.", 
+        "status": "ROUTINE_LOGIN_OK" 
+    }
 }
 """
 @api_view(['POST'])
@@ -46,7 +52,7 @@ def AutoLogin(request: Request):
 
     # 이미 로그아웃이 되어있는지 확인
     if account.is_login == 0:
-        Log.instance().error( "AUTO_LOGIN: ROUTINE_ALREADY_LOGIN", account.account_id )
+        Log.instance().error( "AUTO_LOGIN: ROUTINE_ALREADY_LOGOUT", account.account_id )
         return Response( MessageSerializer( Message.getByCode( "ROUTINE_LOGIN_FAIL" ) ).data, status=400 )
 
     # 로그인 정보 DB에 저장

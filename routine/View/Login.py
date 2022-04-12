@@ -23,8 +23,14 @@ Request
 
 Response
 {
-    "data":    { "account_id": 0, "token": "a.b.c" },
-    "message": { "msg": ".", "status": "ROUTINE_LOGIN_OK" }
+    "data": { 
+        "account_id": 0, 
+        "token": "j.w.t" 
+    },
+    "message": { 
+        "msg": "성공적으로 로그인되었습니다.", 
+        "status": "ROUTINE_LOGIN_OK" 
+    }
 }
 """
 @api_view(['POST'])

@@ -98,7 +98,7 @@ SIMPLE_JWT = {
 REST_USE_JWT = True
 
 # CORS 관련 추가 
-CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000' ,'http://localhost:3000'] 
+CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000' ,'http://localhost:3000', 'http://shrimp2ubt.ddns.net:3000'] 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [ 'token' ]
 

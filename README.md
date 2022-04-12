@@ -10,8 +10,9 @@
 2022-04-07 (목) ~ 2022-04-14 (목) 1주일
 
 ## URLs
-* [Api]()
-* [Github](https://github.com/MinyShrimp/DanbiRoutine)
+* [Api](http://shrimp2ubt.ddns.net:8003/api/...)
+* [Github-Backend](https://github.com/MinyShrimp/DanbiRoutine)
+* [Github-Frontend](https://github.com/MinyShrimp/DanbiFront)
 * [Notion](https://incongruous-mammal-d63.notion.site/219a8e9343cb4933b8e8e8cc5d6f51ad?v=b34abb4ff6f2455b9fba63d218b67cc9)
 * [Postman](https://danbiroutine.postman.co/workspace/)
 

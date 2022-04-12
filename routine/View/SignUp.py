@@ -21,8 +21,13 @@ Request
 
 Response
 {
-    "data":    { "account_id": 0 },
-    "message": { "msg": ".", "status": "ROUTINE_SIGNUP_OK" }
+    "data":    { 
+        "account_id": 0 
+    },
+    "message": { 
+        "msg": "성공적으로 회원가입되었습니다.", 
+        "status": "ROUTINE_SIGNUP_OK" 
+    }
 }
 """
 @api_view(['POST'])
