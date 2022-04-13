@@ -82,7 +82,7 @@ class RoutinesSearch(APIView):
 
         routine        = Routine.objects.filter( account = account, is_deleted = 0 ).select_related('account', 'category')
         routine_day    = RoutineDay.objects.filter( routine__in = routine, day = getDateTimeByDay( data["day"] ) ).select_related('routine')
-        routine_result = RoutineResult.objects.filter( routine__in = routine_day.values("routine") ).select_related('routine', 'result')
+        routine_result = RoutineResult.objects.filter( routine__in = routine_day.values("routine") ).select_related('routine', 'result').order_by('routine_id')
 
         serializer = []
         for result in routine_result:

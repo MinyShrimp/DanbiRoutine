@@ -18,7 +18,7 @@ from routine.Functions.ClearData  import isClearJWT, isClearRoutineResultData
 
 """
 Request
-[/api/result/, post]
+[/api/result/, put]
 header: {
     "token": "j.w.t"
 }
