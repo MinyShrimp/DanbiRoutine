@@ -22,7 +22,7 @@ from routine.Model.RoutineResult import RoutineResult
 from routine.Serializer.Message  import MessageSerializer
 from routine.Serializer.Routine  import RoutineIDSerializer
 from routine.Functions.ClearData import isClearJWT, isClearRoutineCreateData, isClearRoutineDetailData, isClearRoutineUpdateData
-from routine.Functions.DateUtils import DateSort 
+from routine.Functions.DateUtils import DateConvertor, DateConvertorToDate, getDateTimeMon, getDateTimeSun
 
 # /api/routine
 class RoutineView(APIView):
@@ -80,9 +80,11 @@ class RoutineView(APIView):
         # body data 꺼내기
         routine_id = data["routine_id"]
 
+        monday, sunday = getDateTimeMon(), getDateTimeSun()
+
         routine        = Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.select_related('routine', 'result').get( routine = routine )
-        routine_day    = RoutineDay.objects.filter( routine = routine ).select_related('routine')
+        routine_day    = RoutineDay.objects.filter( routine = routine, day__range = ( monday, sunday ) ).select_related('routine')
 
         routine_serializer = {
             "id"       : routine.routine_id,
@@ -90,7 +92,7 @@ class RoutineView(APIView):
             "category" : routine.category.title,
             "result"   : routine_result.result.title,
             "is_alarm" : True if routine.is_alarm == 1 else False,
-            "days"     : [ _.day for _ in routine_day ]
+            "days"     : DateConvertorToDate(routine_day)
         }
 
         Log.instance().info( "SEARCH: ROUTINE_DETAIL_OK", account.account_id, routine.routine_id )
@@ -158,11 +160,11 @@ class RoutineView(APIView):
         )
 
         RoutineResult.objects.create(
-            routine = routine, result = Result.objects.get(result_id = 1), is_deleted = 0
+            routine = routine, result = Result.objects.get(title = "NOT"), is_deleted = 0
         )
         
         RoutineDay.objects.bulk_create(
-            [ RoutineDay( routine = routine, day = _day ) for _day in DateSort(days) ]
+            [ RoutineDay( routine = routine, day = _day ) for _day in DateConvertor(days) ]
         )
 
         Log.instance().info( "CREATE: ROUTINE_CREATE_OK", account.account_id, routine.routine_id )
@@ -301,7 +303,7 @@ class RoutineView(APIView):
 
         routine_days.delete()
         RoutineDay.objects.bulk_create(
-            [ RoutineDay( routine = routine, day = _day ) for _day in DateSort(days) ]
+            [ RoutineDay( routine = routine, day = _day ) for _day in DateConvertor(days) ]
         )
 
         Log.instance().info( "UPDATE: ROUTINE_UPDATE_OK", account.account_id, routine.routine_id )

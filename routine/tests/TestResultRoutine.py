@@ -5,7 +5,7 @@ from routine.tests.Base.TokenHeaderTest import TokenHeaderTest
 class TestResultRoutine(TokenHeaderTest):
     ###############################################
     # protected values
-    _url = "/api/result/"
+    _url, _method = "/api/result/", "PUT"
 
     ###############################################
     # public functions
@@ -47,16 +47,12 @@ class TestResultRoutine(TokenHeaderTest):
     
     # key값이 빠진 경우
     def test_invalid_key_result(self):
-        body = { 
-            "routine_id" : self.routine_id
-        }
+        body = { "routine_id" : self.routine_id }
         self._request_400(body)
     
     # key값이 빠진 경우
     def test_invalid_key_id(self):
-        body = { 
-            "result" : "TRY"
-        }
+        body = { "result" : "TRY" }
         self._request_400(body)
     
     # key값이 이상한 경우

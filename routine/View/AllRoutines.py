@@ -14,7 +14,7 @@ from routine.Model.RoutineDay     import RoutineDay
 from routine.Model.RoutineResult  import RoutineResult
 from routine.Serializer.Message   import MessageSerializer
 from routine.Functions.ClearData  import isClearJWT
-from routine.Functions.DateUtils  import DateSort
+from routine.Functions.DateUtils  import DateConvertorToDate, getDateTimeMon, getDateTimeSun
 
 """
 모든 기록 가져오기 View
@@ -70,12 +70,14 @@ class AllRoutine(APIView):
             Log.instance().error( "SEARCHALL: ROUTINE_NOT_LOGIN", account.account_id )
             return Response( MessageSerializer( Message.getByCode( "ROUTINE_ALL_FAIL" ) ).data, status=400 )
 
+        monday, sunday = getDateTimeMon(), getDateTimeSun()
+
         routine        = Routine.objects.filter( account = account, is_deleted = 0 ).select_related('account', 'category')
         routine_result = RoutineResult.objects.filter( routine__in = routine ).select_related('routine', 'result')
         
         serializer = []
         for result in routine_result:
-            routine_days   = RoutineDay.objects.filter( routine = result.routine ).select_related('routine')
+            routine_days   = RoutineDay.objects.filter( routine = result.routine, day__range = ( monday, sunday ) ).select_related('routine')
 
             serializer.append({
                 "id"       : result.routine.routine_id,
@@ -83,7 +85,7 @@ class AllRoutine(APIView):
                 "category" : result.routine.category.title,
                 "result"   : result.result.title,
                 "is_alarm" : True if result.routine.is_alarm == 1 else False,
-                "days"     : DateSort( [ _.day for _ in routine_days ] )
+                "days"     : DateConvertorToDate( routine_days )
             })
 
         Log.instance().info( "SEARCHALL: ROUTINE_ALL_OK", account.account_id )

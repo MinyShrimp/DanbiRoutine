@@ -16,8 +16,31 @@ from routine.Model.RoutineResult  import RoutineResult
 from routine.Serializer.Message   import MessageSerializer
 from routine.Functions.ClearData  import isClearJWT, isClearRoutineResultData
 
+"""
+Request
+[/api/result/, post]
+header: {
+    "token": "j.w.t"
+}
+body: {
+    "routine_id" : 5,
+    "result"     : "TRY"
+}
+
+Response
+{
+    "data": {
+        "routine_id": 5,
+        "result" : "TRY"
+    },
+    "message": {
+        "msg": "성공적으로 결과를 업데이트되었습니다.", 
+        "status": "ROUTINE_RESULT_OK"
+    }
+}
+"""
 class RoutineResultView(APIView):
-    def post(self, request: Request):
+    def put(self, request: Request):
         data:    Final = request.data
         jwt_str: Final = request.META.get('HTTP_TOKEN')
 

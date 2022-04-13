@@ -7,6 +7,7 @@ import jwt
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.settings import SECRET_KEY
+from routine.Functions.DateUtils import getDateTimeByDay
 
 from routine.Log.Log             import Log
 from routine.Model.Account       import Account
@@ -226,9 +227,9 @@ def isClearRoutineListData(data: object, jwt_str: str):
     try:
         email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
         account = Account.objects.get( email = email )
-
+        
         routine        = Routine.objects.filter( account = account, is_deleted = 0 )
-        routine_day    = RoutineDay.objects.filter( routine__in = routine, day = day )
+        routine_day    = RoutineDay.objects.filter( routine__in = routine, day = getDateTimeByDay( day ) )
         routine_result = RoutineResult.objects.filter( routine__in = routine_day.values("routine") )
         if routine.exists() == None or routine_day.exists() == None or routine_result.exists() == None:
             Log.instance().error("SEACRH_LIST: INVALID_DB", data)
