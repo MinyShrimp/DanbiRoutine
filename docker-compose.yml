@@ -26,3 +26,12 @@ services:
         depends_on:
             - db
         restart: always
+    webserver:
+        build:
+            context: ./webserver/
+            dockerfile: Dockerfile
+        container_name: routine_web
+        volumes:
+            - ./webserver/:/app/
+        ports: 
+            - 80:8002

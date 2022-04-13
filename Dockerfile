@@ -11,7 +11,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 RUN dockerize -wait tcp://routine_db:3306 -timeout 30s
 
-RUN pip install Django djangorestframework djangorestframework-simplejwt mysqlclient
+RUN pip install Django djangorestframework djangorestframework-simplejwt mysqlclient django-cors-headers
 RUN pip install pyJWT==1.7.1
 
 RUN apt-get update
@@ -20,4 +20,4 @@ RUN export TZ=Asia/Seoul
 
 RUN python manage.py makemigrations
 CMD [ "python", "manage.py", "runserver", "0.0.0.0:8003" ]
-EXPOSE 8000
+EXPOSE 8003
