@@ -1,5 +1,7 @@
 # 단비교육 백엔드 개발 과제
 
+![](./Pictures/MainPage.png)
+
 ## 기술스택
 * Python - Django, DRF
 * MySQL

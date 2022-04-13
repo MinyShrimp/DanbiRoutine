@@ -298,3 +298,44 @@ def isClearRoutineUpdateData(data: object, jwt_str: str):
         return False
     
     return True
+
+# RoutineResultView 에서 사용
+def isClearRoutineResultData(data: object, jwt_str: str):
+    # 키 값이 정상적으로 왔는지
+    if not CheckKeys( 
+        list( data.keys() ), 
+        ["routine_id", "result"]
+    ):
+        Log.instance().error("RESULT: INVALID_KEY", data)
+        return False
+
+    # 값들의 자료형이 잘 왔는지
+    routine_id, result = data["routine_id"], data["result"]
+    if not CheckTypes( 
+        [routine_id, result], 
+        [int, str] 
+    ):
+        Log.instance().error("RESULT: INVALID_VALUE_TYPE", data)
+        return False
+
+    # SQL Injection Check
+    if CheckInjection(result):
+        Log.instance().error("RESULT: SQL_INJECTION", data)
+        return False
+    
+    # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
+    if not ( result in ["NOT", "TRY", "DONE"] ):
+        Log.instance().error("RESULT: INVALID_DAYS_VALUE", data)
+        return False
+    
+    try:
+        email   = jwt.decode(jwt_str, SECRET_KEY)["email"]
+        account = Account.objects.get( email = email )
+
+        routine        = Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
+        routine_result = RoutineResult.objects.select_related('routine', 'result').get( routine = routine, is_deleted = 0 )
+    except Exception as e:
+        Log.instance().error("UPDATE: INVALID_DB", data, e)
+        return False
+    
+    return True
