@@ -34,11 +34,6 @@ class TestDeleteRoutine(TokenHeaderTest):
         body = {  }
         self._request_400(body)
     
-    # 값 type이 int가 아닌 경우
-    def test_invalid_value_type(self):
-        body = { "routine_id" : str( self.routine_id ) }
-        self._request_400(body)
-    
     # 값이 현재 DB에 들어가 있지 않는 경우
     def test_invalid_db(self):
         body = { "routine_id" : self.routine_id + 1 }

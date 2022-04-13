@@ -15,7 +15,7 @@ from routine.Model.RoutineDay     import RoutineDay
 from routine.Model.RoutineResult  import RoutineResult
 from routine.Serializer.Message   import MessageSerializer
 from routine.Functions.ClearData  import isClearJWT, isClearRoutineListData
-from routine.Functions.DateUtils  import DateConvertorToDate, getDateTimeMon, getDateTimeSun, getDateTimeByDay
+from routine.Functions.DateUtils  import DateConvertorToDate, getDateTimeByDay
 
 """
 기간 검색 View

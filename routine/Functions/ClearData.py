@@ -324,7 +324,7 @@ def isClearRoutineResultData(data: object, jwt_str: str):
         Log.instance().error("RESULT: SQL_INJECTION", data)
         return False
     
-    # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
+    # result 에서 NOT, TRY, DONE 외에 다른 문자가 들어있는 경우
     if not ( result in ["NOT", "TRY", "DONE"] ):
         Log.instance().error("RESULT: INVALID_DAYS_VALUE", data)
         return False
