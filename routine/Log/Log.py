@@ -34,9 +34,3 @@ class Log(SingletonInstane):
     
     def critical( self, msg: str, *args ):
         self.logger.critical( self.get_str( msg, *args ) )
-    
-class ErrorLog(Log):
-    logger = getLogger('danbi.error')
-
-    def error( self, msg: str, *args ):
-        self.logger.error( self.get_str( msg, *args ) )

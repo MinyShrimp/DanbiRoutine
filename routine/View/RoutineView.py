@@ -1,7 +1,8 @@
 
-from datetime import datetime, timedelta
 from typing   import Final
 from jwt      import decode
+
+from django.http import QueryDict
 from django.utils.timezone import now
 
 from api.settings import SECRET_KEY
@@ -33,13 +34,16 @@ class RoutineView(APIView):
         header: {
             "token": "j.w.t"
         }
+        body: {}
 
         Response:
         {
             "data": {
-                "id": 4,
+                "id": 3,
                 "title": "test1",
                 "result": "NOT",
+                "category": "HOMEWORK",
+                "is_alarm": true,
                 "days": []
             },
             "message": {
@@ -48,8 +52,11 @@ class RoutineView(APIView):
             }
         }
         """
-        data:    Final = request.GET
-        jwt_str: Final = request.META.get('HTTP_TOKEN')
+        data    = request.GET
+        jwt_str = request.META.get('HTTP_TOKEN')
+
+        if type(data) == QueryDict:
+            data = data.dict()
 
         # JWT 검증
         if not isClearJWT(jwt_str):
@@ -78,10 +85,12 @@ class RoutineView(APIView):
         routine_day    = RoutineDay.objects.filter( routine = routine ).select_related('routine')
 
         routine_serializer = {
-            "id": routine.routine_id,
-            "title": routine.title,
-            "result": routine_result.result.title,
-            "days": [ _.day for _ in routine_day ]
+            "id"       : routine.routine_id,
+            "title"    : routine.title,
+            "category" : routine.category.title,
+            "result"   : routine_result.result.title,
+            "is_alarm" : True if routine.is_alarm == 1 else False,
+            "days"     : [ _.day for _ in routine_day ]
         }
 
         Log.instance().info( "SEARCH: ROUTINE_DETAIL_OK", account.account_id, routine.routine_id )

@@ -1,6 +1,6 @@
 
-from typing   import Final
-from jwt      import decode
+from django.http import QueryDict
+from jwt         import decode
 
 from api.config                   import SECRET_KEY
 from rest_framework.response      import Response
@@ -25,21 +25,28 @@ Request
 header: {
     "token": "j.w.t"
 }
+body: {}
 
 Response
 {
-    "data" : [{
-        "id": 2,
-        "result": "NOT",
-        "title": "test1"
-    },
-    {
-        "id": 3,
-        "title": "test1",
-        "result": "NOT",
-        "category": "HOMEWORK",
-        "days": []
-    }],
+    "data" : [
+        {
+            "id": 2,
+            "title": "test1",
+            "result": "NOT",
+            "category": "HOMEWORK",
+            "is_alarm": true,
+            "days": []
+        },
+        {
+            "id": 3,
+            "title": "test1",
+            "result": "NOT",
+            "category": "HOMEWORK",
+            "is_alarm": true,
+            "days": []
+        }
+    ],
     "message": {
         "msg": "목록 조회를 성공했습니다.", 
         "status": "ROUTINE_LIST_OK"
@@ -48,8 +55,11 @@ Response
 """
 class RoutinesSearch(APIView):
     def get(self, request: Request):
-        data:    Final = request.GET
-        jwt_str: Final = request.META.get('HTTP_TOKEN')
+        data    = request.GET
+        jwt_str = request.META.get('HTTP_TOKEN')
+
+        if type(data) == QueryDict:
+            data = data.dict()
 
         # JWT 검증
         if not isClearJWT(jwt_str):
@@ -79,11 +89,12 @@ class RoutinesSearch(APIView):
             routine_days = RoutineDay.objects.filter( routine = result.routine ).select_related('routine')
 
             serializer.append({
-                "id": result.routine.routine_id,
-                "title": result.routine.title,
-                "category": result.routine.category.title,
-                "result": result.result.title,
-                "days": DateSort( [ _.day for _ in routine_days ] )
+                "id"       : result.routine.routine_id,
+                "title"    : result.routine.title,
+                "category" : result.routine.category.title,
+                "result"   : result.result.title,
+                "is_alarm" : True if result.routine.is_alarm == 1 else False,
+                "days"     : DateSort( [ _.day for _ in routine_days ] )
             })
 
         Log.instance().info( "SEARCHs: ROUTINE_LIST_OK", account.account_id )

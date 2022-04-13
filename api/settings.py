@@ -210,16 +210,7 @@ LOGGING = {
             "filename": BASE_DIR / "logs/requests.log",
             "maxBytes": 1024*1024*5,  # 5 MB
             "backupCount": 5
-        },
-        "error_file": {
-            "level": "ERROR",
-            'encoding': 'utf-8',
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "standard",
-            "filename": BASE_DIR / "logs/errors.log",
-            "maxBytes": 1024*1024*5,  # 5 MB
-            "backupCount": 5
-        },
+        }
     },
     'loggers': {
         'django': {
@@ -243,10 +234,6 @@ LOGGING = {
         'danbi.routine': {
             'level': 'INFO',
             'handlers': ['danbi'],
-        },
-        'danbi.error': {
-            'level': 'ERROR',
-            'handlers': ['error_file'],
-        },
+        }
     }
 }

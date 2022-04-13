@@ -8,7 +8,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.settings import SECRET_KEY
 
-from routine.Log.Log             import ErrorLog, Log
+from routine.Log.Log             import Log
 from routine.Model.Account       import Account
 from routine.Model.Category      import Category
 from routine.Model.Routine       import Routine
@@ -28,7 +28,7 @@ def CheckInjection(s: str) -> bool:
     if re.search( regex, s ):
         return True
     
-    regex2: Final = '[\{\}\[\]\/?,;:|\)*~`^\-_+<>\#$%&\\\=\(\'\"]'
+    regex2: Final = '[\{\}\[\]\/?,;:|\)*~`^\-+<>\#$%&\\\=\(\'\"]'
     if re.search( regex2, s ):
         return True
     
@@ -117,7 +117,7 @@ def isClearLoginData(data: object):
     try:
         Account.objects.get(email = data["email"])
     except Exception as e:
-        ErrorLog.instance().error(e)
+        Log.instance().error(e)
         return False
 
     return True
@@ -129,6 +129,7 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
         list( data.keys() ), 
         ["title", "category", "goal", "is_alarm", "days"] 
     ):
+        Log.instance().error("CREATE: INVALID_KEYS", data)
         return False
 
     # 값들의 자료형이 잘 왔는지
@@ -137,29 +138,35 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
         [title, category, goal, is_alarm, days], 
         [str, str, str, bool, list] 
     ):
+        Log.instance().error("CREATE: INVALID_VALUES", data)
         return False
     
     # SQL Injection Check
     for v in [title, category, goal]:
         if CheckInjection(v):
+            Log.instance().error("CREATE: SQL_INJECTION", data)
             return False
 
     # 카테고리들이 유효하게 있는지
     categorys = Category.objects.all()
     if not( category in map( lambda x: x.title,  categorys ) ):
+        Log.instance().error("CREATE: INVALID_CATEGORY", data)
         return False
 
-    # days의 최대 길이가 7 초과인 경우    
+    # days의 최대 길이가 7 초과인 경우 
     if len(days) > 7 or len(days) == 0:
+        Log.instance().error("CREATE: INVALID_DAYS_LEN", data)
         return False
     
     # days에 중복된 값이 있는 경우
     if len(set(days)) != len(days):
+        Log.instance().error("CREATE: OVERLAP_DAYS", data)
         return False
 
     # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
     for v in days:
         if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] ):
+            Log.instance().error("CREATE: INVALID_DAYS_VALUE", data)
             return False
     
     try:
@@ -167,46 +174,23 @@ def isClearRoutineCreateData(data: object, jwt_str: str):
         Account.objects.get( email = email )
         Category.objects.get( title = category )
     except Exception as e:
-        ErrorLog.instance().error(e)
+        Log.instance().error("CREATE: INVALID_DB", data, e)
         return False
     
     return True
-
-# # DeleteRoutine에서 사용
-# def isClearRoutineDeleteData(data: object, jwt_str: str):
-#     # 키 값이 정상적으로 왔는지
-#     if not CheckKeys( list( data.keys() ), ["routine_id", "day"] ):
-#         return False
-
-#     # 값들의 자료형이 잘 왔는지
-#     routine_id, day = data["routine_id"], data["day"]
-#     if not CheckTypes( [routine_id, day], [int, str] ):
-#         return False
-    
-#     try:
-#         email = jwt.decode(jwt_str, SECRET_KEY)["email"]
-#         Account.objects.get( email = email )
-#         y, m, d = day.split('-')
-#         date = datetime(int(y), int(m), int(d), 0, 0, 0, 0)
-
-#         routine = Routine.objects.get( routine_id = routine_id, is_deleted = 0 )
-#         RoutineResult.objects.get(routine = routine, is_deleted = 0)
-#         RoutineDay.objects.get( routine = routine, day = date )
-#     except Exception as e:
-#         ErrorLog.instance().error(e)
-#         return False
-    
-#     return True
 
 # DeleteRoutine, SearchRoutine에서 사용
 def isClearRoutineDetailData(data: object, jwt_str: str):
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( list( data.keys() ), ["routine_id"] ):
+        Log.instance().error("SEARCH_DELETE: INVALID_KEY", data)
         return False
 
     # 값들의 자료형이 잘 왔는지
-    routine_id = data["routine_id"]
-    if not CheckTypes( [ routine_id ], [int] ):
+    try:
+        routine_id = int( data["routine_id"] )
+    except Exception as e:
+        Log.instance().error("SEARCH_DELETE: INVALID_VALUE_TYPE", data, e)
         return False
     
     try:
@@ -216,7 +200,7 @@ def isClearRoutineDetailData(data: object, jwt_str: str):
         routine        = Routine.objects.get( routine_id = routine_id, account = account, is_deleted = 0 )
         routine_result = RoutineResult.objects.get( routine = routine )
     except Exception as e:
-        ErrorLog.instance().error(e)
+        Log.instance().error("SEARCH_DELETE: INVALID_DB", data, e)
         return False
     
     return True
@@ -225,11 +209,18 @@ def isClearRoutineDetailData(data: object, jwt_str: str):
 def isClearRoutineListData(data: object, jwt_str: str):
     # 키 값이 정상적으로 왔는지
     if not CheckKeys( list( data.keys() ), ["day"] ):
+        Log.instance().error("SEACRH_LIST: INVALID_KEY", data)
         return False
 
     # 값들의 자료형이 잘 왔는지
     day = data["day"]
-    if not CheckTypes( [day], [str] ):
+    if day == '':
+        Log.instance().error("SEACRH_LIST: INVALID_VALUE_EMPTY", data)
+        return False
+    
+    # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
+    if not ( day in ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] ):
+        Log.instance().error("SEACRH_LIST: INVALID_DAYS_VALUE", data)
         return False
     
     try:
@@ -240,10 +231,11 @@ def isClearRoutineListData(data: object, jwt_str: str):
         routine_day    = RoutineDay.objects.filter( routine__in = routine, day = day )
         routine_result = RoutineResult.objects.filter( routine__in = routine_day.values("routine") )
         if routine.exists() == None or routine_day.exists() == None or routine_result.exists() == None:
+            Log.instance().error("SEACRH_LIST: INVALID_DB", data)
             return False
 
     except Exception as e:
-        ErrorLog.instance().error(e)
+        Log.instance().error("SEACRH_LIST: INVALID_DB", data, e)
         return False
     
     return True
@@ -255,6 +247,7 @@ def isClearRoutineUpdateData(data: object, jwt_str: str):
         list( data.keys() ), 
         ["routine_id", "title", "category", "goal", "is_alarm", "days"]
     ):
+        Log.instance().error("UPDATE: INVALID_KEY", data)
         return False
 
     # 값들의 자료형이 잘 왔는지
@@ -264,29 +257,35 @@ def isClearRoutineUpdateData(data: object, jwt_str: str):
         [routine_id, title, category, goal, is_alarm, days], 
         [int, str, str, str, bool, list] 
     ):
+        Log.instance().error("UPDATE: INVALID_VALUE_TYPE", data)
         return False
 
     # SQL Injection Check
     for v in [title, category, goal]:
         if CheckInjection(v):
+            Log.instance().error("UPDATE: SQL_INJECTION", data)
             return False
 
     # 카테고리들이 유효하게 있는지
     categorys = Category.objects.all()
     if not( category in map( lambda x: x.title,  categorys ) ):
+        Log.instance().error("UPDATE: INVALID_CATEGORY", data)
         return False
 
     # days의 최대 길이가 7 초과인 경우    
     if len(days) > 7 or len(days) == 0:
+        Log.instance().error("UPDATE: INVALID_DAYS_LEN", data)
         return False
     
     # days에 중복된 값이 있는 경우
     if len(set(days)) != len(days):
+        Log.instance().error("UPDATE: INVALID_DAYS_LEN", data)
         return False
 
     # days 에서 MON~SUN 외에 다른 문자가 들어있는 경우
     for v in days:
         if not ( v in ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] ):
+            Log.instance().error("UPDATE: INVALID_DAYS_VALUE", data)
             return False
     
     try:
@@ -295,7 +294,7 @@ def isClearRoutineUpdateData(data: object, jwt_str: str):
 
         Routine.objects.select_related('account', 'category').get( routine_id = routine_id, account = account, is_deleted = 0 )
     except Exception as e:
-        ErrorLog.instance().error(e)
+        Log.instance().error("UPDATE: INVALID_DB", data, e)
         return False
     
     return True

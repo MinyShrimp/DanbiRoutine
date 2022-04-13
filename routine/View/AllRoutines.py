@@ -24,6 +24,7 @@ Request
 header: {
     "token": "j.w.t"
 }
+body: {}
 
 Response
 {
@@ -77,12 +78,12 @@ class AllRoutine(APIView):
             routine_days   = RoutineDay.objects.filter( routine = result.routine ).select_related('routine')
 
             serializer.append({
-                "id": result.routine.routine_id,
-                "title": result.routine.title,
-                "category": result.routine.category.title,
-                "result": result.result.title,
-                "is_alarm": True if result.routine.is_alarm == 1 else False,
-                "days": DateSort( [ _.day for _ in routine_days ] )
+                "id"       : result.routine.routine_id,
+                "title"    : result.routine.title,
+                "category" : result.routine.category.title,
+                "result"   : result.result.title,
+                "is_alarm" : True if result.routine.is_alarm == 1 else False,
+                "days"     : DateSort( [ _.day for _ in routine_days ] )
             })
 
         Log.instance().info( "SEARCHALL: ROUTINE_ALL_OK", account.account_id )
