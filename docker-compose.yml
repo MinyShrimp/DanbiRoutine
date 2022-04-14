@@ -22,7 +22,7 @@ services:
         volumes:
             - ./:/app/
         ports: 
-            - 8003:8003
+            - 8003:80
         depends_on:
             - db
         restart: always

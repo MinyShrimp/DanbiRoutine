@@ -99,9 +99,10 @@ REST_USE_JWT = True
 
 # CORS 관련 추가 
 CORS_ORIGIN_WHITELIST = [
-    'http://127.0.0.1:3000' ,'http://localhost:3000', 
-    'http://127.0.0.1:8002' ,'http://localhost:8002', 
-    'http://shrimp2ubt.ddns.net'
+    'http://127.0.0.1:3000', 'http://localhost:3000', 
+    'http://127.0.0.1:8002', 'http://localhost:8002', 
+    'http://13.209.68.75', 'https://13.209.68.75',
+    'http://shrimp.danbiroutine.kro.kr', 'https://shrimp.danbiroutine.kro.kr'
 ] 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [ 'token' ]
@@ -136,8 +137,12 @@ USE_I18N = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_ROOT = ''
+STATIC_URL = '/static/'
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [
+    STATIC_DIR,
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

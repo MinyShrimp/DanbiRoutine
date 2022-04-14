@@ -19,5 +19,5 @@ RUN apt-get install tzdata
 RUN export TZ=Asia/Seoul
 
 RUN python manage.py makemigrations
-CMD [ "python", "manage.py", "runserver", "0.0.0.0:8003" ]
-EXPOSE 8003
+CMD [ "python", "manage.py", "runserver", "0.0.0.0:80" ]
+EXPOSE 80
